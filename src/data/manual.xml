@@ -1,0 +1,721 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <articleinfo>
+    <title><application>Warehouse Manager</application> User Manual</title>
+  </articleinfo>
+  <sect1>
+    <title>Introduction </title>
+    <para>
+
+Warehouse Manager is a business application designed to allow you to
+manage several aspects of your personal warehouse based enterprise from
+your computer. Warehouse Manager provides you with a quick and easy way
+to store and access your buiness data and use it to perform mission
+critical decisions. If you are the manager of a warehouse based company
+and are tired of some of the error prone burdens associated with manual
+information management and decision making then Warehouse Manager is for
+you.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>About this Manual</title>
+    <para>
+
+This User Manual describes how to use Warehouse Manager. It serves as a
+means to describe the user interface and how to use it to accomplish
+common tasks. This manual also describes the underlying assumptions
+Warehouse Manager makes about the underlying data model. You may
+want to read through the manual to familiarize yourself with
+Warehouse Manager and exploit its capabilities to their
+fullest.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>Using the Software Product</title>
+    <para>
+
+Warehouse Manager has been designed with the user in mind and care has been
+taken to make the application as user friendly as possible. With Warehouse
+Manager you will never have to key in the same data twice. Warehouse Manager
+stores your data in a database and presents it to you whenever you need to
+access it so you don't even have to remember it.
+
+Warehouse Manager consists of several screens each allowing you to carry
+out a set of related taks. Each screen presents a logical view of some
+portion of data held in the database and consists of one or more tables,
+input widgets, and buttons, altogether allowing you to carry out data
+selection and manipulation. In most cases data is selected by clicking
+on the corresponding table rows. In the case where data is being
+selected from a popup window the selection is completed by clicking on
+the corresponding done push button. Usually when data is selected from a
+table it is also displayed in more detail on nearby widgets displaying
+dates, numeric data, lines of text, or other information. On most
+screens buttons allowing the user to add, modify, or delete can also be
+found. These buttons allow the user to initiate the specified action.
+For modification and deletion though, it is necessary to select the
+appropriate row to be modified or deleted first. When manipulating data
+it is important that you complete (or cancel) each action by clicking on
+the appropriate submit or cancel push button provided for this purpose.
+
+    </para>
+    <para>
+
+Currently the user interface implementation is comprised of several
+components the most obvious being a menu bar and a tab widget. The
+menu bar is where basic tasks such as connecting to a particular
+database or reading this manual can be found. The tab widget is
+used to select among one of twelve main screens each of which
+may involve subscreens and subselection popup windows.
+The twelve screens are named Inventory, Customers, Representatives,
+Suppliers, Sales, Sold Items, Purchases, Purchased Items, Containers,
+Categories, Item Catalogue, and History. Their purpose and workings
+are described in the following sections. To speed things up you
+may wish to use the tab key to move the input focus from widget
+to widget. When the tab widget has the input focus you may use
+the right and left arrow keys to move from one main screen to
+another. Similarly whenever a table has the input focus you
+may use the up and down keys to select data. Furthermore
+enabled tables may be sorted according to the fields
+appearing in their headers by clicking on them.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>Suppliers, Representatives, and Customers</title>
+    <para>
+
+This software product assumes items coming from suppliers first enter and then
+exit the warehouse at a later time as representatives sell them to customers.
+Given these premises Warehouse Manager allows you to manage personal
+information pertaining to these three entities.
+
+    </para>
+    <sect2>
+      <title>Accessing and Manipulating Data</title>
+      <para>
+
+Warehouse Manager allows you to access contact information with a simple
+tab widget selection and table row selection. You may simply click on the
+table presented to you on the left hand side and scroll down to the record
+of interest. Warehouse Manager will present on the left hand side of the
+screen complete information pertaining to the selected entity. The same
+screen is also used to manipulate data. As mentioned earlier, once this
+information is entered you will not have to enter it ever again on other
+screens as such information will be automatically extracted from the
+database and presented to you by the application on screens where
+such information is required. This approach makes the overall
+process of data management is thus made less error prone
+across the application while enforcing constraints which
+allow the data in your database to be consistent and
+thus suitable for being analyzed at a later time.
+
+      </para>
+      <para>
+
+The process of adding, modifying, or deleting a record
+on each of the Suppliers, Representatives, and Customers
+screens is similar so these operations will be described
+for Suppliers. To add a supplier, simply click Add, and
+key in all mandatory fields and whichever optional fields
+you wish. The Submit push button will become enabled when
+the application is ready to accept the entered information.
+Click it to complete the operation. Modifying and Deleting
+are analogous, except you must select the desired record to
+be modified or deleted from the corresponding data table first.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Suppliers Constraints</title>
+      <para>
+
+Suppliers are identified by supplier name. Hence it is not possible to
+add or modify suppliers in such a way that the added or modified
+supplier name matches that of an existing supplier.
+Removal of a supplier implies removal of all brand and items associated
+with such supplier and removal of all container categories and containers
+associated with such supplier. However, such operation is not permitted
+in the case where purchases from the given supplier have been made. In
+particular no nonempty containers associated with a given supplier can
+ever be discarded by the application. This is because nonemptyness of
+a given container implies the existence of a purchase from the given
+supplier which prevents deletion of the given supplier, hence
+preventing deletion of nonempty containers. Removal of a
+supplier whose items participate in sales to customers
+is also not permitted.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Customers Constraints</title>
+      <para>
+
+Customers are identified by customer name. Hence it is not possible to
+add or modify customers in such a way that the added or modified
+customer name matches that of an existing customer.
+Removal of a customer to which merchandise has been sold is not permitted.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Representatives Constraints</title>
+      <para>
+
+Representatives are identified by representative ID. Hence it is not possible to
+add or modify representatives in such a way that the added or modified
+representative ID matches that of an existing representative.
+Removal of a representative which has participated in sales
+is not permitted.
+
+      </para>
+    </sect2>
+  </sect1>
+
+
+
+  <sect1>
+    <title>Item Catalogue</title>
+    <para>
+
+The Item Catalogue screen allows you to define items which
+are being considered for future purchase from suppliers and
+provides a means to introduce items to the application. The
+user may wish to either add items prior to their purchase
+using this screen or add them as they are being purchased
+from the Purchases screen. In the latter case, the
+application will automatically add the purchased
+items to the item catalogue.
+
+    </para>
+    <para>
+
+The Item Catalogue screen implements three master detail data tables.
+Selecting a supplier allows the user to access information pertaining
+to all brands related to that particular supplier. Once supplier and
+brand are selected the user may access information about all items
+pertaining to that particular supplier and brand.
+
+    </para>
+    <para>
+
+The supplier information entered in the Item Catalogue screen consists
+of the supplier name alone. Once a supplier name is entered in the
+supplier catalogue an entry is added to the Suppliers screen so
+that the user may entered more detailed information pertaining
+to such supplier at a later time if desired.
+
+    </para>
+    <para>
+
+The user may associate a prospective sales item price with each item
+made known to the application. This represents the advertised customer
+price to be told to customers as they inquire about particular items.
+The user may wish to either enter such information as items are being
+defined or ignore it and modify it at a later time if needed.
+
+    </para>
+    <sect2>
+      <title>Item Catalogue Constraints</title>
+      <para>
+
+Suppliers are identified by supplier name. Brands are identified by
+supplier name and supplier brand. Items are identified by supplier
+name, supplier brand, and item code. The usual restrictions to
+adding and modifying these entities apply. That is, no two
+supplier names may be identical, no two combinations of
+supplier name and brand may be identical, and no two
+combinations of supplier name, supplier brand, and
+item code may be identical. Nevertheless, it is
+acceptable for two distinct suppliers to have
+identical brands, or even for two distinct
+brands to have identical item codes.
+
+      </para>
+      <para>
+
+Removal of a supplier implies removal of all brand and items associated
+with such supplier and removal of all container categories and containers
+associated with such supplier. However, such operation is not permitted
+in the case where purchases from the given supplier have been made. In
+particular no nonempty containers associated with a given supplier can
+ever be discarded by the application. This is because nonemptyness of
+a given container implies the existence of a purchase from the given
+supplier which prevents deletion of the given supplier, hence
+preventing deletion of nonempty containers. Removal of a
+supplier whose items participate in sales to customers
+is also not permitted.
+
+      </para>
+      <para>
+
+Removal of a brand implies removal of all items associated with corresponding
+supplier and brand and removal of all container categories and containers
+associated with such supplier and brand. However, such operation is not
+permitted in the case where purchases from the given supplier with given brand
+have been made. In particular no nonempty containers associated with a
+given supplier and brand can ever be discarded by the application. This
+is because nonemptyness of a given container implies the existence of a
+purchase from the given supplier with given brand which prevents deletion
+of the given brand, hence preventing deletion of nonempty containers.
+Removal of a supplier brand with associated items participating in
+sales is also not permitted.
+
+      </para>
+       <para>
+
+Removal of an item code is not permitted in the case where purchases
+from the given supplier with given brand and item code have been made.
+In particular no nonempty containers associated with a given supplier,
+brand, and item code can ever be discarded by the application. This
+is because nonemptyness of a given container implies the existence of
+a purchase from the given supplier with given brand and item code which
+prevents deletion of the given item code, hence preventing deletion
+of nonempty containers. Removal of an item which participates in
+sales is also not permitted.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Purchases</title>
+    <para>
+
+The Purchases screen allows you to keep track of purchases. The action of
+receiving items purchased from suppliers or returning damaged items to
+suppliers are carried out independently on the Purchased Items screen.
+Neither do suppliers need be defined in the Suppliers screen, nor do
+items need be defined in the Item Catalogue screen prior to items
+being purchased. Entries for these will be added to the appropriate
+screens by the application as purchases are carried out from
+the Purchases screen.
+
+    </para>
+    <para>
+
+To carry out a purchase, click on the Add push button and enter the date,
+supplier name, order number, and an optional order description. The supplier
+name is entered via the popup window invoked by clicking on the button to the
+right of the supplier name widget. The popup widget presents allows the user
+to modify information pertaining to known supplier names, and finally select
+the entry of interest by selecting it in the data table and clicking on the
+done push button. As always, the user must click on the Submit push button
+to complete the operation.
+
+    </para>
+    <para>
+
+Once a purchase is created, the user typically proceeds to adding items
+to the given purchase using the screen on the right hand side. A popup
+window is provided to select brand and item corresponding to the
+supplier from which the purchase is being carried out. Purchase
+items will appear in the purchased items data table. The user
+may also choose to modify or cancel a purchase at a later time
+which is made possible using the usual application controls.
+Note that received items may not be deleted from the
+Purchases screen.
+
+    </para>
+    <sect2>
+      <title>Purchases Constraints</title>
+      <para>
+
+Purchases are identified by purchase number. Hence it is not possible to
+add or modify purchases in such a way that the added or modified
+purchase number matches that of an existing purchase. Removal of
+a purchase implies removal of all items comprising such purchase
+from the purhcase itself but not from the item catalogue. Removal
+of a purchase with associated received items is not permitted.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Purchase Items Constraints</title>
+      <para>
+Purchase items are identified by purchase number, supplier name,
+supplier brand, and item code. Hence it is not possible to add
+or modify such items in such a way that the added or modified
+item has the same identifying information as an existing one.
+Should the number of requested items of a given kind need to
+be modified the change can be carried out by adjusting the
+corresponding quantity field. Removal of an item from a
+given purchase is not permitted in the case where some
+quantity of the given item has already been received.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Purchased Items</title>
+    <para>
+
+Once purchases have been filed items may arrive from suppliers and must be
+unpacked so that they may be stored in the warehouse inventory. This happens
+when items from pending orders are received. Unpacked items which have not
+yet been stored in warehouse containers are considered to be loose and can
+be stored separately from the Containers screen. The Purchased Items screen
+is used to record when items are received from suppliers. The Purchased Items
+screen is also used to ship damaged items back to the supplier. The application
+assumes that all damaged items result from customer returns. In order to ship
+an item back to a supplier the user must first ensure that enough damaged
+items exist in the warehouse.
+
+    </para>
+    <para>
+
+The application groups items received as part of supplier purchases by date.
+Hence if more than one parcel arrives with items from the same order on the
+same date, the user will have to click on the Modify push button to adjust
+the number of received items coming from a particular purchase as they
+are received.
+
+    </para>
+    <sect2>
+      <title>Received Purchased Items Constraints</title>
+      <para>
+
+The event of receiving some quantity of a purchased item is identified
+by date received, purchase number, supplier name, supplier brand, and
+item code. Hence it is not possible to add or modify such events in
+such a way that the added or modified event has the same identifying
+information as an existing one.
+
+      </para>
+      <para>
+
+Should the number of items received on a particular date corresponding
+to a given event need to be modified the change can be carried out by
+adjusting the corresponding quantity field. Removal or modification
+of such an event is not permitted in the case where the number of
+loose items is less that the modified or deleted number of
+corresponding items received according to the given event.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Sent Purchased Items Constraints</title>
+      <para>
+
+The event of sending some quantity of a purchased item is identified
+by date received, purchase number, supplier name, supplier brand, and
+item code. Hence it is not possible to add or modify such events in
+such a way that the added or modified event has the same identifying
+information as an existing one.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Container Categories and Tax Categories</title>
+    <para>
+
+The application assumes that the warehouse is comprised of a bunch
+of containers, each of which falls into one of several user defined
+categories. Such categories can be set up from the Categories screen.
+It is also assumed that each category is identified by a unique user
+specified ID and references a unique product supplier and brand. Each
+category also references one or more user defined tax categories
+consisting of a tax category description and tax category percentage.
+Tax categories are used for classifying merchandise according to
+expenses associated with products crossing national borders.
+
+    </para>
+    <sect2>
+      <title>Container Categories Constraints</title>
+      <para>
+
+Container Categories are identified by category ID. Hence it is not
+possible to add or modify container categories in such a way that
+the added or modified container category ID matches that of an
+existing tax category. Removal of a container category such
+that nonempty containers associated with such tax category
+exist is not permitted. On the other hand removal of a
+container category implies removal of all
+necessarily empty containers associated
+with such tax category.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Tax Categories Constraints</title>
+      <para>
+
+Tax Categories are identified by category description. Hence it is not
+possible to add or modify tax categories in such a way that the added
+or modified category description matches that of an existing tax
+category. Removal of a tax category which is part of a container
+category is not permitted.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Containers</title>
+      <para>
+
+Merchandise is sold from warehouse containers. In the case of items being
+sold prior to them being available in the warehouse, an empty container for
+such items needs to be defined so that representatives may sell the merchandise
+according to container category and container number. The Containers screen allows
+you to decide which items must go inside which containers. Each container will contain
+one type of item. However, at a later time you may decide that a given container may
+contain items of a different kind. This operation is possible since when an item is
+sold, the application records along with the current category ID and container number
+also the supplier name, brand, and item code of the item being sold. Thus should the
+category ID and container number be used at a later time to store a different kind
+of item it is still possible to find out what item was requested by the customer.
+Hence ombinations of container item and container number may be reused over time
+as desired.
+
+    </para>
+    <para>
+
+To add a container, you must first click on the Add push button. Then
+you must select an appropriate container item from the items table on
+the top right hand side. Tax categories matching the selected supplier
+and brand combination will be displayed on the bottom right hand side
+table and the user must select one of these. In case any of the two
+tables on the right hand side happens to be empty or not contain
+the desired data, the user will have to first add such data from
+the corresponding Items and Categories table. Once a selection
+exists in both tables you must specifiy a container number and
+the number of items to move to the container. The table on the
+left hand side will be then updated upon clicking the Submit
+push button.
+
+    </para>
+    <para>
+
+The Available field of the table on the left hand side represents
+the number of items of a given kind which have arrived at the warehouse
+but have not yet been stored in their appropriate warehouse containers.
+The number of items stored cannot exceed the number of available itmes.
+Upon modification and removal of items from containers the corresponding
+number of available loose items is updated. This step is usually only
+necessary when items need be returned to the supplier.
+
+    </para>
+    <para>
+
+The user should note that the quantity field may be zero at container
+creation in case the user needs to define a category for ordered items
+which have not yet arrived and wants to have representative sell them
+using preassigned container category and container number. This
+operation can be carried out from the Sales screen. Note that
+as expected, the user will not be able to record shipment of
+items to customers unless they are first present in their
+respective containers. Shush shipment is carried out from
+the Sold Items screen.
+
+    </para>
+    <para>
+
+Finally, it is assumed that the warehouse is initially empty. Should
+this not be the case, in the worse of all circumstances it is always
+possible to add a phony supplier and a phony order containing everything
+in the warehouse, so as to initialize the warehouse contents.
+
+    </para>
+    <sect2>
+      <title>Containers Constraints</title>
+      <para>
+
+Containers are identified by category ID and container number. Hence it
+is not possible to add or modify containers in such a way that the added
+or modified container ID and container number matches that of an existing
+container. Each container identifies one kind of item from the Item Catalogue
+as well as one kind of container category. Hence items added to such containers
+must necessarily match in supplier name, supplier brand, and item code. Removal
+of a container which contains items implies loosening all items stored within
+that container prior to container disposal.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Sales</title>
+    <para>
+
+The Purchases and Sales screens have similar user interfaces. While items
+need not be defined in the Items screen prior to their purchase, appropriate
+containers must be set up in the Containers screen prior to the sale of items
+described therein to take place. Items may even be sold from empty containers.
+In either case, merchandise will need to be loosened from the appropriate
+containers prior to it being shipped to customers. No items may be
+shipped to customers until they are available in the warehouse.
+The process of shipping items to customers is recorded from the
+Sold Items window.
+
+    </para>
+    <para>
+
+Representatives need not be defined in the Representatives screen
+prior to sales taking place. However complete information pertaining
+to a given representative may only be edited from the Representatives
+screen and not from the sales screen.
+
+    </para>
+    <para>
+
+To carry out a sale, first complete the date, sale ID, sale representative,
+and customer information. The representative and customer must be entered
+via their respective popup forms which can be seen when the push buttons
+to the right of the widgets to be filled in by the application are clicked.
+In these popup forms, the user typically selects the appropriate field by choosing
+the corresponding table row and clicks the done button. Once a sale is created,
+the user proceeds to add items to the given sale using the screen on the right
+hand side. A popup window is provided to select supplier, brand, and item.
+Only those items which have been registered with a given container will
+show up.
+
+    </para>
+    <para>
+
+In case the user decides to modify or cancel a sale
+at a later time this is also possible using the usual
+application controls, just as in the purchases screen.
+
+    </para>
+    <para>
+
+Note that recording a particular sale does not imply immediate
+recepit or shipment of items. Pending items will be queued and
+the user must record corresponding shipments through the
+Sold Items screen.
+
+    </para>
+    <sect2>
+      <title>Sales Constraints</title>
+      <para>
+
+Sales are identified by sale number. Hence it is not possible to
+add or modify sales in such a way that the added or modified
+sale number matches that of an existing sale. Removal of a
+sale with associated sent items is not permitted.
+
+      </para>
+    </sect2>
+    <sect2>
+      <title>Sale Items Constraints</title>
+      <para>
+
+Sale items are identified by sale number, supplier name,
+supplier brand, and item code. Hence it is not possible to add
+or modify such items in such a way that the added or modified
+item has the same identifying information as an existing one.
+Should the number of requested items of a given kind need to
+be modified the change can be carried out by adjusting the
+corresponding quantity field. Removal of an item from a
+given sale is not permitted in the case where some
+quantity of the given item has already been sent.
+
+      </para>
+    </sect2>
+  </sect1>
+  <sect1>
+    <title>Receiving and Shipping Customer and Supplier Items</title>
+    <para>
+
+The Sold Items screens are used to record the sending of sold items to 
+customers as well as the receiving of damaged items from customers.
+The user may select among these two screens using the provided
+combo box situated under the tab widget.
+
+    </para>
+    <para>
+
+Items must be available as loose items in order to be sent. However
+in order to cater to those situations where an ordered item is sold
+out or no longer being produced at the supplier site, the application
+makes it possible to substitute specific quantities of ordered items
+with substituted items, which, must be available as loose items in
+the warehouse. In such cases the sold items are recorded as
+being satisfied and the number of substitute items specified
+is decremented from the warehouse inventory.
+
+    </para>
+    <para>
+
+When the customer sends an item to the warehouse, the application is
+able to allow the user select whether the sent item was the original
+one or whether it was a replacement in which case the user must select
+the item it was supposed to replace. In either case the number of
+replaced items received is added to the warehouse and the number
+of satisfied items of the substituted type is decremented.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>Inventory</title>
+    <para>
+
+The Inventory window gives you a broad view of the current state of the warehouse, including
+all items from the item catalogue independently of whether any reside in the warehouse, all
+containers and their associated category information regardless of whether such containers
+contain any items, advertized price to be announced to interested customers, average
+purchase and sale prices of items over the entire history of the warehouse, how many
+good items are in stock, and how many damaged items are in stock. Concerning good
+items, the application also displays how many are loose and how many have been
+stored in containers. Furthermore, the incoming and outgoing fields can be
+used to check how many purchased items yet have to be received, and how
+many sold items yet have to be sent.
+
+    </para>
+    <para>
+
+As the user selects rows from the item table, two other tables update themselves to
+display all orders of the given items which have been carried out, including a breakdown
+of which customers await which orders. Thus when items are received the user can decide
+how to distribute the received items among customers waiting for them. The user can
+also gain some appreciation of the popularity of an item by looking at these windows
+comparing date and quantity information.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>History</title>
+    <para>
+
+The History view allows you to inspect the state of the warehouse
+on any given date. Click on the Take Snapshot button to record the
+state of the warehouse on the current date. It is recommended that
+this is done as frequently as possible, ideally on a daily basis,
+as this will add value to the application data thus enhancing
+accuracy of data analusis. Closing the application using the
+Exit menu option will automatically take a snapshot of the
+current state of the warehouse.
+
+    </para>
+  </sect1>
+  <sect1>
+    <title>Bug Reporting and Feedback</title>
+    <para>
+
+Several efforts have been made to ensure the usability of this program
+meets the demands of real users. In the end, what matters is end user
+satisfaction. In an attempt to make this product even more useful the
+author would like to encourage your feedback, good or bad. While no
+guarantee is made that your suggestions will be incorporated,
+serious consideration will be given to all requests. Chances
+are you may even wish to contribute to this software product
+in which case you are free to join in. Whether your would
+like to enhance it with new features or simply port it to
+another language your contributions will be more than
+welcome, and your participation and ideas will be
+greatly appreciated. Finally, I would like to
+thank all those people whom over the
+development of the software product
+have contributed their thoughts and 
+with their enthusiasm and ideas have
+kept this project alive.
+
+    </para>
+    <para>
+      Neil Zanella
+      <email>nzanella@users.sourceforge.net</email>
+    </para>
+  </sect1>
+</article>

@@ -1,0 +1,90 @@
+Warehouse Manager Installation Instructions
+===========================================
+
+Requirements:
+=============
+
+The current version of Warehouse Manager can be compiled for both Linux
+and Windows platforms with some effort. In either case the following are
+required to compile the current version of Warehouse Manager:
+
+- A C compiler (e.g. GNU g++ on Linux or MS Visual Studio on Windows)
+- GTK+ 2.0 development libraries.
+- libglade library (version 0.17 or later recommended)
+- libgda (version 1.0.4 recommended, although later stable releases may work)
+
+Note that the Warehouse Manager source code also makes use of libxml, but
+this is not listed in the requirements as it is a prerequisite for libglade.
+
+Installation Instructions:
+==========================
+
+- Ensure all required libraries are available on your system, otherwise
+  download them and install them.
+
+- Unpack the archive, since you are reading this, presumably you have
+  already taken this step, but for completeness:
+
+  $ tar -zxvf whm-x.y.z.tar.gz where x.y.z is the version number
+
+- Change to the whm directory.
+
+  $ cd whm
+
+- Issue a make command in the top-level directory to build everything:
+
+  $ make
+
+- Become root and issue a make install:
+
+  $ su -
+  # make install
+
+Your're done (well, almost). There is also a "make rpminstall" option which you
+can issue as root to build an RPM package and automatically install from there.
+
+Postinstallation Instructions:
+==============================
+
+In order to use Warehouse Manager you must create a warehouse database. The way
+in which you set up the database varies according to which RDBMS you are using.
+Warehouse Manager is written to be compatible with a variety of databse servers
+including Oracle, PostgreSQL, MySQL, and others. Here we cover PostgreSQL but
+installation on other servers is similar.
+
+The following assumes you are logged in as user johndoe. Substitute your real
+username for johndoe in what follows. We also assume a Fedora Core 3 installation.
+For other Linux distributions the setup procedure is similar. Prompts have been
+preceded by the name of the Unix user which must issue the given commands.
+
+johndoe $ su -
+root # su postgres
+root # /etc/init.d/postgresql start
+Starting postgresql service:                               [  OK  ]
+postgres $ createuser johndoe
+(answer yes to all questions)
+postgres $ logout
+root # logout
+johndoe $ createdb warehouse
+johndoe $ psql warehouse
+Welcome to psql 7.4.6, the PostgreSQL interactive terminal.
+
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
+warehouse=# \i /usr/share/whm/data.sql
+(database table creation details omitted)
+warehouse=# \q
+
+Running Instructions:
+=====================
+
+You are now ready to launch whm by either typing its name on the
+command line or by launching it from the Gnome Startup menu.
+
+Note: the databse server needs to be running for you to access tables etc...
+      so make sure you start it either as root or configure your system to
+      to make the database server start automatically when it boots up.

@@ -1,0 +1,2690 @@
+<?xml version="1.0"?>
+<!DOCTYPE datagui PUBLIC "-//Neil Zanella//DTD Data GUI 1.0//EN" "http://whm.sf.net/dtds/datagui/datagui-1.0.dtd">
+<datagui version="1.0">
+  <!-- Inventory Screen items control node -->
+  <control cname="inv_items">
+    <extractor>
+      <query>
+        SELECT ccatid, contnum, ccatdesc, taxcat, taxper,
+               supid, supname, brandname, itemcode,
+               advsellprice, avsellprice, advpurchprice, avpurchprice,
+               numstored + numloose AS numinstock, numstored, numloose, numdamaged, numincoming, numoutgoing
+        FROM (TaxCategories NATURAL JOIN Containers NATURAL JOIN ContainerCategories NATURAL JOIN Suppliers)
+        NATURAL RIGHT JOIN
+        (SELECT supid, brandname, itemcode, advsellprice, advpurchprice,
+             avsellprice, avpurchprice, numloose, numdamaged,
+             numIncoming, numOutgoing
+         FROM (IncomingItemsView
+               NATURAL RIGHT JOIN
+               (AveragePurchasingPriceView NATURAL RIGHT JOIN Items NATURAL LEFT JOIN AverageSellingPriceView)
+               NATURAL LEFT JOIN
+               OutgoingItemsView)
+        ) IncomingOutgoingItems
+      </query>
+      <field fname="ccatid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="contnum" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="ccatdesc" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="taxcat" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="taxper" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="advsellprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="avsellprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="advpurchprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="avpurchprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="numinstock" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numstored" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numloose" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numdamaged" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numincoming" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numoutgoing" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="inv_items_clist1">
+      <header fname="ccatid"/>
+      <header fname="contnum"/>
+      <header fname="ccatdesc"/>
+      <header fname="taxcat"/>
+      <header fname="taxper"/>
+      <header fname="supid"/>
+      <header fname="supname"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="advsellprice"/>
+      <header fname="avsellprice"/>
+      <header fname="advpurchprice"/>
+      <header fname="avpurchprice"/>
+      <header fname="numinstock"/>
+      <header fname="numstored"/>
+      <header fname="numloose"/>
+      <header fname="numdamaged"/>
+      <header fname="numincoming"/>
+      <header fname="numoutgoing"/>
+    </selector>
+  </control>
+  <!-- Inventory Screen purchases control node -->
+  <control cname="inv_purchases">
+    <extractor>
+      <query>
+        SELECT supid, brandname, itemcode, purchnum, purchdate,
+               numpurchased, numpurchsatisfied, numpurchased - numpurchsatisfied AS numpurchpending
+        FROM (PurchaseItems NATURAL JOIN Purchases) NATURAL JOIN ReceivePurchasedItems
+        WHERE supid = $ctl.inv_items.supid
+          AND brandname = $ctl.inv_items.brandname
+          AND itemcode = $ctl.inv_items.itemcode
+      </query>
+      <field fname="purchid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchdate" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="numpurch" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="purchnumsatisfied" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="purchnumpending" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="inv_purchases_clist1">
+      <header fname="purchid"/>
+      <header fname="purchdate"/>
+      <header fname="numpurch"/>
+      <header fname="purchnumsatisfied"/>
+      <header fname="purchnumpending"/>
+    </selector>
+  </control>
+  <!-- Inventory Screen sales control node -->
+  <control cname="inv_sales">
+    <extractor>
+      <query>
+        SELECT supid, brandname, itemcode, salenum, saledate, 
+               numsold, numsoldsatisfied, numsold - numsoldsatisfied AS numsoldpending
+        FROM (SellItems NATURAL JOIN Sales) NATURAL JOIN SendSoldItems
+        WHERE supid = $ctl.inv_items.supid
+          AND brandname = $ctl.inv_items.brandname
+          AND itemcode = $ctl.inv_items.itemcode
+      </query>
+      <field fname="salenum" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="saledate" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="numsold" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="salenumsatisfied" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="salenumpending" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="inv_sales_clist1">
+      <header fname="salenum"/>
+      <header fname="saledate"/>
+      <header fname="numsold"/>
+      <header fname="salenumsatisfied"/>
+      <header fname="salenumpending"/>
+    </selector>
+  </control>
+  <!-- Master-Detail Links across Inventory Screen -->
+  <masterdetail mcname="inv_items" dcname="inv_sales">
+    <mdfield fname="supid"/>
+    <mdfield fname="brandname"/>
+    <mdfield fname="itemcode"/>
+  </masterdetail>
+  <masterdetail mcname="inv_items" dcname="inv_purchases">
+    <mdfield fname="supid"/>
+    <mdfield fname="brandname"/>
+    <mdfield fname="itemcode"/>
+  </masterdetail>
+  <!-- Suppliers Screen control nodes -->
+  <control cname="sup_suppliers">
+    <extractor>
+      <query>
+        SELECT supid, supname, supstreet, supcity,
+               suppostalcode, supprovince, supcountry,
+               supphonenumber, supfaxnumber, supemail,
+               supwebsite, supregistrationnumber, suptaxcode,
+               supbankaccountnumber, bankid, supother
+        FROM Suppliers
+        ORDER BY supid, supname, supstreet, supcity
+      </query>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supstreet" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supcity" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="suppostalcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supprovince" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supcountry" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supphonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supfaxnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supemail" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supwebsite" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supregistrationnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="suptaxcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supbankaccountnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supother" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="sup_suppliers_clist1">
+      <header fname="supid"/>
+      <header fname="supname"/>
+      <header fname="supstreet"/>
+      <header fname="supcity"/>
+    </selector>
+    <manipulator>
+      <exposer name="sup_id_entry1" fname="supid"/>
+      <exposer name="sup_name_entry1" fname="supname"/>
+      <exposer name="sup_street_entry1" fname="supstreet"/>
+      <exposer name="sup_city_entry1" fname="supcity"/>
+      <exposer name="sup_postalcode_entry1" fname="suppostalcode"/>
+      <exposer name="sup_province_entry1" fname="supprovince"/>
+      <exposer name="sup_country_entry1" fname="supcountry"/>
+      <exposer name="sup_phonenumber_entry1" fname="supphonenumber"/>
+      <exposer name="sup_faxnumber_entry1" fname="supfaxnumber"/>
+      <exposer name="sup_email_entry1" fname="supemail"/>
+      <exposer name="sup_website_entry1" fname="supwebsite"/>
+      <exposer name="sup_registrationnumber_entry1" fname="supregistrationnumber"/>
+      <exposer name="sup_taxcode_entry1" fname="suptaxcode"/>
+      <exposer name="sup_bankaccountnumber_entry1" fname="supbankaccountnumber"/>
+      <exposer name="sup_bankid_entry1" fname="bankid"/>
+      <exposer name="sup_other_textview1" fname="supother"/>
+      <executor>
+        <add name="sup_add_togglebutton1"/>
+        <modify name="sup_modify_togglebutton1"/>
+        <remove name="sup_remove_togglebutton1"/>
+        <submit name="sup_submit_togglebutton1"/>
+        <cancel name="sup_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Suppliers
+              WHERE supid = $new.supid
+            </query>
+            <errormessage>supplier with specified supplier ID already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert supplier data -->
+          <query>
+            INSERT INTO Suppliers
+              (supid, supname, supstreet, supcity,
+               suppostalcode, supprovince, supcountry,
+               supphonenumber, supfaxnumber, supemail,
+               supwebsite, supregistrationnumber, suptaxcode,
+               supbankaccountnumber, bankid, supother)
+            VALUES
+              ($new.supid, $new.supname, $new.supstreet, $new.supcity,
+               $new.suppostalcode, $new.supprovince, $new.supcountry,
+               $new.supphonenumber, $new.supfaxnumber, $new.supemail,
+               $new.supwebsite, $new.supregistrationnumber, $new.suptaxcode,
+               $new.supbankaccountnumber, $new.bankid, $new.supother)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Suppliers
+              WHERE supid = $new.supid
+                AND $new.supid &lt;&gt; $old.supid
+            </query>
+            <errormessage>supplier with specified supplier ID already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update supplier data -->
+          <query>
+            UPDATE Suppliers SET
+              supid = $new.supid, supname = $new.supname, supstreet = $new.supstreet,
+              supcity = $new.supcity, suppostalcode = $new.suppostalcode,
+              supprovince = $new.supprovince, supcountry = $new.supcountry,
+              supphonenumber = $new.supphonenumber, supfaxnumber = $new.supfaxnumber,
+              supemail = $new.supemail, supwebsite = $new.supwebsite,
+              supregistrationnumber = $new.supregistrationnumber, suptaxcode = $new.suptaxcode,
+              supbankaccountnumber = $new.supbankaccountnumber, bankid = $new.bankid,
+              supother = $new.supother
+            WHERE supid = $old.supid
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no merchandise from supplier has been purchased -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Purchases
+              WHERE supid = $new.supid
+            </query>
+            <errormessage>purchases from specified supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- ensure no merchandise from supplier has been sold -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM SellItems
+              WHERE supid = $new.supid
+            </query>
+            <errormessage>sales of items from specified supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- delete containers associated with supplier -->
+          <query>
+            DELETE FROM Containers
+            WHERE supid = $new.supid
+          </query>
+          <!-- delete item catalogue items associated with supplier -->
+          <query>
+            DELETE FROM Items
+            WHERE supid = $new.supid
+          </query>
+          <!-- delete supplier data -->
+          <query>
+            DELETE FROM Suppliers
+            WHERE supid = $new.supid
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Representatives Screen control nodes -->
+  <control cname="rep_representatives">
+    <extractor>
+      <query>
+        SELECT repid, repsaleslocation, repname, repstreet, repcity,
+               reppostalcode, repprovince, repcountry,
+               repworkphonenumber, rephomephonenumber,
+               repcellphonenumber, repfaxnumber, repemail,
+               repwebsite, repregistrationnumber, reptaxcode,
+               repbankaccountnumber, bankid, repother
+        FROM Representatives
+        ORDER BY repid, repsaleslocation
+      </query>
+      <field fname="repid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repsaleslocation" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repstreet" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repcity" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="reppostalcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repprovince" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repcountry" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repworkphonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="rephomephonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repcellphonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repfaxnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repemail" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repwebsite" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repregistrationnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="reptaxcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repbankaccountnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repother" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="rep_representatives_clist1">
+      <header fname="repid"/>
+      <header fname="repname"/>
+      <header fname="repsaleslocation"/>
+    </selector>
+    <manipulator>
+      <exposer name="rep_id_entry1" fname="repid"/>
+      <exposer name="rep_saleslocation_entry1" fname="repsaleslocation"/>
+      <exposer name="rep_name_entry1" fname="repname"/>
+      <exposer name="rep_street_entry1" fname="repstreet"/>
+      <exposer name="rep_city_entry1" fname="repcity"/>
+      <exposer name="rep_postalcode_entry1" fname="reppostalcode"/>
+      <exposer name="rep_province_entry1" fname="repprovince"/>
+      <exposer name="rep_country_entry1" fname="repcountry"/>
+      <exposer name="rep_homephonenumber_entry1" fname="rephomephonenumber"/>
+      <exposer name="rep_workphonenumber_entry1" fname="repworkphonenumber"/>
+      <exposer name="rep_cellphonenumber_entry1" fname="repcellphonenumber"/>
+      <exposer name="rep_faxnumber_entry1" fname="repfaxnumber"/>
+      <exposer name="rep_email_entry1" fname="repemail"/>
+      <exposer name="rep_website_entry1" fname="repwebsite"/>
+      <exposer name="rep_registrationnumber_entry1" fname="repregistrationnumber"/>
+      <exposer name="rep_taxcode_entry1" fname="reptaxcode"/>
+      <exposer name="rep_bankaccountnumber_entry1" fname="repbankaccountnumber"/>
+      <exposer name="rep_bankid_entry1" fname="bankid"/>
+      <exposer name="rep_other_textview1" fname="repother"/>
+      <executor>
+        <add name="rep_add_togglebutton1"/>
+        <modify name="rep_modify_togglebutton1"/>
+        <remove name="rep_remove_togglebutton1"/>
+        <submit name="rep_submit_togglebutton1"/>
+        <cancel name="rep_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT repid FROM Representatives
+              WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+            </query>
+            <errormessage>representative with specified representative ID and sales location already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert sales representative data -->
+          <query>
+            INSERT INTO Representatives
+              (repid, repsaleslocation, repname, repstreet, repcity,
+               reppostalcode, repprovince, repcountry,
+               rephomephonenumber, repworkphonenumber, repcellphonenumber,
+               repfaxnumber, repemail, repwebsite, repregistrationnumber,
+               reptaxcode, repbankaccountnumber, bankid, repother)
+            VALUES
+              ($new.repid, $new.repsaleslocation, $new.repname, $new.repstreet, $new.repcity,
+               $new.reppostalcode, $new.repprovince, $new.repcountry,
+               $new.rephomephonenumber, $new.repworkphonenumber, $new.repcellphonenumber,
+               $new.repfaxnumber, $new.repemail, $new.repwebsite, $new.repregistrationnumber,
+               $new.reptaxcode, $new.repbankaccountnumber, $new.bankid, $new.repother)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT repid FROM Representatives
+              WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+                AND ($new.repid &lt;&gt; $old.repid OR $new.repsaleslocation &lt;&gt; $old.repsaleslocation)
+            </query>
+            <errormessage>representative with specified representative ID and sales location already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update sales representative data -->
+          <query>
+            UPDATE Representatives SET
+              repid = $new.repid, repsaleslocation = $new.repsaleslocation,
+              repname = $new.repname, repstreet = $new.repstreet,
+              repcity = $new.repcity, reppostalcode = $new.reppostalcode,
+              repprovince = $new.repprovince, repcountry = $new.repcountry,
+              rephomephonenumber = $new.rephomephonenumber, repworkphonenumber = $new.repworkphonenumber,
+              repfaxnumber = $new.repfaxnumber, repemail = $new.repemail, repwebsite = $new.repwebsite,
+              repregistrationnumber = $new.repregistrationnumber, reptaxcode = $new.reptaxcode,
+              repbankaccountnumber = $new.repbankaccountnumber, bankid = $new.bankid,
+              repother = $new.repother
+            WHERE repid = $old.repid AND repsaleslocation = $old.repsaleslocation
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no sales representative has not carried out any sales -->
+          <emptycheck>
+            <query>
+              SELECT repid FROM Sales
+              WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+            </query>
+            <errormessage>sales associated with given representative already exist!</errormessage>
+          </emptycheck>
+          <!-- delete sales representative -->
+          <query>
+            DELETE FROM Representatives
+            WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Customers Screen control nodes -->
+  <control cname="cus_customers">
+    <extractor>
+      <query>
+        SELECT cusid, cusname, cusstreet, cuscity,
+               cuspostalcode, cusprovince, cuscountry,
+               cusphonenumber, cusfaxnumber, cusemail,
+               cuswebsite, cusregistrationnumber, custaxcode,
+               cusbankaccountnumber, bankid, cusother
+        FROM Customers
+        ORDER BY cusid, cusname, cusstreet, cuscity
+      </query>
+      <field fname="cusid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusstreet" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cuscity" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cuspostalcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusprovince" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cuscountry" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusphonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusfaxnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusemail" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cuswebsite" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusregistrationnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="custaxcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusbankaccountnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusother" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="cus_customers_clist1">
+      <header fname="cusid"/>
+      <header fname="cusname"/>
+      <header fname="cusstreet"/>
+      <header fname="cuscity"/>
+    </selector>
+    <manipulator>
+      <exposer name="cus_id_entry1" fname="cusid"/>
+      <exposer name="cus_name_entry1" fname="cusname"/>
+      <exposer name="cus_street_entry1" fname="cusstreet"/>
+      <exposer name="cus_city_entry1" fname="cuscity"/>
+      <exposer name="cus_postalcode_entry1" fname="cuspostalcode"/>
+      <exposer name="cus_province_entry1" fname="cusprovince"/>
+      <exposer name="cus_country_entry1" fname="cuscountry"/>
+      <exposer name="cus_phonenumber_entry1" fname="cusphonenumber"/>
+      <exposer name="cus_faxnumber_entry1" fname="cusfaxnumber"/>
+      <exposer name="cus_email_entry1" fname="cusemail"/>
+      <exposer name="cus_website_entry1" fname="cuswebsite"/>
+      <exposer name="cus_registrationnumber_entry1" fname="cusregistrationnumber"/>
+      <exposer name="cus_taxcode_entry1" fname="custaxcode"/>
+      <exposer name="cus_bankaccountnumber_entry1" fname="cusbankaccountnumber"/>
+      <exposer name="cus_bankid_entry1" fname="bankid"/>
+      <exposer name="cus_other_textview1" fname="cusother"/>
+      <executor>
+        <add name="cus_add_togglebutton1"/>
+        <modify name="cus_modify_togglebutton1"/>
+        <remove name="cus_remove_togglebutton1"/>
+        <submit name="cus_submit_togglebutton1"/>
+        <cancel name="cus_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT cusid FROM Customers
+              WHERE cusid = $new.cusid
+            </query>
+            <errormessage>customer with specified customer ID already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert customer data -->
+          <query>
+            INSERT INTO Customers
+              (cusid, cusname, cusstreet, cuscity,
+               cuspostalcode, cusprovince, cuscountry,
+               cusphonenumber, cusfaxnumber, cusemail,
+               cuswebsite, cusregistrationnumber, custaxcode,
+               cusbankaccountnumber, bankid, cusother)
+            VALUES
+              ($new.cusid, $new.cusname, $new.cusstreet, $new.cuscity,
+               $new.cuspostalcode, $new.cusprovince, $new.cuscountry,
+               $new.cusphonenumber, $new.cusfaxnumber, $new.cusemail,
+               $new.cuswebsite, $new.cusregistrationnumber, $new.custaxcode,
+               $new.cusbankaccountnumber, $new.bankid, $new.cusother)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT cusid FROM Customers
+              WHERE cusid = $new.cusid
+                AND $new.cusid &lt;&gt; $old.cusid
+            </query>
+            <errormessage>customer with specified customer ID already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.bankid = $new.bankid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT bankid FROM Banks
+                  WHERE bankid = $new.bankid
+                </query>
+                <errormessage>bank with specified bank ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update customer data -->
+          <query>
+            UPDATE Customers SET
+              cusid = $new.cusid, cusname = $new.cusname, cusstreet = $new.cusstreet,
+              cuscity = $new.cuscity, cuspostalcode = $new.cuspostalcode,
+              cusprovince = $new.cusprovince, cuscountry = $new.cuscountry,
+              cusphonenumber = $new.cusphonenumber, cusfaxnumber = $new.cusfaxnumber,
+              cusemail = $new.cusemail, cuswebsite = $new.cuswebsite,
+              cusregistrationnumber = $new.cusregistrationnumber, custaxcode = $new.custaxcode,
+              cusbankaccountnumber = $new.cusbankaccountnumber, bankid = $new.bankid,
+              cusother = $new.cusother
+            WHERE cusid = $old.cusid
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no sales have been carried out with customer -->
+          <emptycheck>
+            <query>
+              SELECT cusid FROM Sales
+              WHERE cusid = $new.cusid
+            </query>
+            <errormessage>sales associated with given customer already exist!</errormessage>
+          </emptycheck>
+          <!-- delete customer data -->
+          <query>
+            DELETE FROM Customers
+            WHERE cusid = $new.cusid
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Banking Institutions Popup Screen control nodes -->
+  <control cname="bankd_banks">
+    <extractor>
+      <query>
+        SELECT bankid, bankname, bankstreet, bankcity,
+               bankpostalcode, bankprovince, bankcountry,
+               bankphonenumber, bankfaxnumber, bankemail,
+               bankwebsite, bankswiftcode, banktransitnumber,
+               bankother
+        FROM Banks
+        ORDER BY bankid, bankname, bankstreet, bankcity
+      </query>
+      <field fname="bankid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankstreet" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankcity" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankpostalcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankprovince" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankcountry" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankphonenumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankfaxnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankemail" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankwebsite" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankswiftcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="banktransitnumber" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="bankother" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="bankd_banks_clist1">
+      <header fname="bankid"/>
+      <header fname="bankname"/>
+      <header fname="bankstreet"/>
+      <header fname="bankcity"/>
+    </selector>
+    <manipulator>
+      <exposer name="bankd_bankid_entry1" fname="bankid"/>
+      <exposer name="bankd_bankname_entry1" fname="bankname"/>
+      <exposer name="bankd_bankstreet_entry1" fname="bankstreet"/>
+      <exposer name="bankd_bankcity_entry1" fname="bankcity"/>
+      <exposer name="bankd_bankpostalcode_entry1" fname="bankpostalcode"/>
+      <exposer name="bankd_bankprovince_entry1" fname="bankprovince"/>
+      <exposer name="bankd_bankcountry_entry1" fname="bankcountry"/>
+      <exposer name="bankd_bankphonenumber_entry1" fname="bankphonenumber"/>
+      <exposer name="bankd_bankfaxnumber_entry1" fname="bankfaxnumber"/>
+      <exposer name="bankd_bankemail_entry1" fname="bankemail"/>
+      <exposer name="bankd_bankwebsite_entry1" fname="bankwebsite"/>
+      <exposer name="bankd_bankswiftcode_entry1" fname="bankswiftcode"/>
+      <exposer name="bankd_banktransitnumber_entry1" fname="banktransitnumber"/>
+      <exposer name="bankd_bankother_textview1" fname="bankother"/>
+      <executor>
+        <add name="bankd_add_togglebutton1"/>
+        <modify name="bankd_modify_togglebutton1"/>
+        <remove name="bankd_remove_togglebutton1"/>
+        <submit name="bankd_submit_togglebutton1"/>
+        <cancel name="bankd_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT bankid FROM Banks
+              WHERE bankid = $new.bankid
+            </query>
+            <errormessage>bank with specified bank ID already exists!</errormessage>
+          </emptycheck>
+          <!-- insert bank data -->
+          <query>
+            INSERT INTO Banks
+              (bankid, bankname, bankstreet, bankcity,
+               bankpostalcode, bankprovince, bankcountry,
+               bankphonenumber, bankfaxnumber, bankemail,
+               bankwebsite, bankswiftcode, banktransitnumber,
+               bankother)
+            VALUES
+              ($new.bankid, $new.bankname, $new.bankstreet, $new.bankcity,
+               $new.bankpostalcode, $new.bankprovince, $new.bankcountry,
+               $new.bankphonenumber, $new.bankfaxnumber, $new.bankemail,
+               $new.bankwebsite, $new.bankswiftcode, $new.banktransitnumber,
+               $new.bankother)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT bankid FROM Banks
+              WHERE bankid = $new.bankid
+                AND $new.bankid &lt;&gt; $old.bankid
+            </query>
+            <errormessage>banking with specified bank ID already exists!</errormessage>
+          </emptycheck>
+          <!-- update bank data -->
+          <query>
+            UPDATE Banks SET
+              bankid = $new.bankid, bankname = $new.bankname, bankstreet = $new.bankstreet,
+              bankcity = $new.bankcity, bankpostalcode = $new.bankpostalcode,
+              bankprovince = $new.bankprovince, bankcountry = $new.bankcountry,
+              bankphonenumber = $new.bankphonenumber, bankfaxnumber = $new.bankfaxnumber,
+              bankemail = $new.bankemail, bankwebsite = $new.bankwebsite,
+              bankswiftcode = $new.bankswiftcode, banktransitnumber = $new.banktransitnumber,
+              bankother = $new.bankother
+            WHERE bankid = $old.bankid
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no suppliers hold accounts associated with bank -->
+          <emptycheck>
+            <query>
+              SELECT bankid FROM Suppliers
+              WHERE bankid = $old.bankid
+            </query>
+            <errormessage>supplier bank accounts associated with given bank already exist!</errormessage>
+          </emptycheck>
+          <!-- ensure no sales representatives hold accounts associated with bank -->
+          <emptycheck>
+            <query>
+              SELECT bankid FROM Representatives
+              WHERE bankid = $old.bankid
+            </query>
+            <errormessage>representative bank accounts associated with given bank already exist!</errormessage>
+          </emptycheck>
+          <!-- ensure no customers hold accounts associated with bank -->
+          <emptycheck>
+            <query>
+              SELECT bankid FROM Customers
+              WHERE bankid = $old.bankid
+            </query>
+            <errormessage>customers associated with given bank already exist!</errormessage>
+          </emptycheck>
+          <!-- delete bank data -->
+          <query>
+            DELETE FROM Banks
+            WHERE bankid = $old.bankid
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Send Receive Link from Banking Institutions Popup Screen to Suppliers Screen -->
+  <sendreceive scname="bankd_banks" rcname="sup_suppliers">
+    <maplet sfname="bankid" rfname="bankid"/>
+    <messenger name="bankd_done_button1"/>
+  </sendreceive>
+  <!-- Send Receive Link from Banking Institutions Popup Screen to Representatives Screen -->
+  <sendreceive scname="bankd_banks" rcname="rep_representatives">
+    <maplet sfname="bankid" rfname="bankid"/>
+    <messenger name="bankd_done_button1"/>
+  </sendreceive>
+  <!-- Send Receive Link from Banking Institutions Popup Screen to Customers Screen -->
+  <sendreceive scname="bankd_banks" rcname="cus_customers">
+    <maplet sfname="bankid" rfname="bankid"/>
+    <messenger name="bankd_done_button1"/>
+  </sendreceive>
+  <!-- Item Catalogue Screen control nodes -->
+  <clonecontrol cname="icat_suppliers" srccname="sup_suppliers">
+    <selector name="icat_suppliers_clist1">
+      <header fname="supid"/>
+      <header fname="supname"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="icat_supid_entry1" fname="supid"/>
+      <exposer name="icat_supname_entry1" fname="supname"/>
+      <cloneexecutor>
+        <add name="icat_supplier_add_togglebutton1"/>
+        <modify name="icat_supplier_modify_togglebutton1"/>
+        <remove name="icat_supplier_remove_togglebutton1"/>
+        <submit name="icat_supplier_submit_togglebutton1"/>
+        <cancel name="icat_supplier_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <control cname="icat_brands">
+    <extractor>
+      <query>
+        SELECT supid, brandname FROM Brands
+        WHERE supid = $ctl.icat_suppliers.supid
+        ORDER BY brandname
+      </query>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name ="icat_brands_clist1">
+      <header fname="brandname"/>
+    </selector>
+    <manipulator>
+      <exposer name="icat_brandname_entry1" fname="brandname"/>
+      <executor>
+        <add name="icat_brand_add_togglebutton1"/>
+        <modify name="icat_brand_modify_togglebutton1"/>
+        <remove name="icat_brand_remove_togglebutton1"/>
+        <submit name="icat_brand_submit_togglebutton1"/>
+        <cancel name="icat_brand_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Brands
+              WHERE supid = $new.supid AND brandname = $new.brandname
+            </query>
+            <errormessage>brand with specified brand name and supplier ID already exists!</errormessage>
+          </emptycheck>
+          <!-- insert brand data -->
+          <query>
+            INSERT INTO Brands (supid, brandname)
+            VALUES ($new.supid, $new.brandname)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Brands
+              WHERE supid = $new.supid AND brandname = $new.brandname
+                AND $new.brandname &lt;&gt; $old.brandname
+            </query>
+            <errormessage>brand with specified brand name and supplier ID already exists!</errormessage>
+          </emptycheck>
+          <!-- update brand data -->
+          <query>
+            UPDATE Brands SET
+              supid = $new.supid, brandname = $new.brandname
+            WHERE supid = $old.supid AND brandname = $old.brandname
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no merchandise of brand from supplier has been purchased -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Purchases
+              WHERE supid = $new.supid AND brandname = $new.brandname
+            </query>
+            <errormessage>purchases of specified brand and supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- ensure no merchandise of brand from supplier has been sold -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM SellItems
+              WHERE supid = $new.supid AND brandname = $new.brandname
+            </query>
+            <errormessage>sales of items of specified brand and supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- delete containers associated with brand from supplier -->
+          <query>
+            DELETE FROM Containers
+            WHERE supid = $new.supid AND brandname = $new.brandname
+          </query>
+          <!-- delete item catalogue items associated with brand from supplier -->
+          <query>
+            DELETE FROM Items
+            WHERE supid = $new.supid
+              AND brandname = $new.brandname
+          </query>
+          <!-- delete brand data -->
+          <query>
+            DELETE FROM Brands
+            WHERE supid = $new.supid AND brandname = $new.brandname
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <control cname="icat_items">
+    <extractor>
+      <query>
+        SELECT supid, brandname, itemcode, advpurchprice, advsellprice, itemdesc FROM Items
+        WHERE supid = $ctl.icat_brands.supid AND brandname = $ctl.icat_brands.brandname
+        ORDER BY itemcode, advpurchprice, advsellprice
+      </query>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="advpurchprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="advsellprice" type="GDA_VALUE_TYPE_NUMERIC"/>
+      <field fname="itemdesc" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="icat_items_clist1">
+      <header fname="itemcode"/>
+      <header fname="advpurchprice"/>
+      <header fname="advsellprice"/>
+    </selector>
+    <manipulator>
+      <exposer name="icat_itemcode_entry1" fname="itemcode"/>
+      <exposer name="icat_advsellprice_spinbutton1" fname="advsellprice"/>
+      <exposer name="icat_advpurchprice_spinbutton1" fname="advpurchprice"/>
+      <exposer name="icat_itemdesc_textview1" fname="itemdesc"/>
+      <executor>
+        <add name="icat_item_add_togglebutton1"/>
+        <modify name="icat_item_modify_togglebutton1"/>
+        <remove name="icat_item_remove_togglebutton1"/>
+        <submit name="icat_item_submit_togglebutton1"/>
+        <cancel name="icat_item_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Items
+              WHERE supid = $new.supid
+                AND brandname = $new.brandname
+                AND itemcode = $new.itemcode
+            </query>
+            <errormessage>item with specified item code already exists!</errormessage>
+          </emptycheck>
+          <!-- insert item data -->
+          <query>
+            INSERT INTO Items
+              (supid, brandname, itemcode, advpurchprice, advsellprice, itemdesc)
+            VALUES
+              ($new.supid, $new.brandname, $new.itemcode, $new.advpurchprice, $new.advsellprice, $new.itemdesc)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Items
+              WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND (supid &lt;&gt; $old.supid
+                     OR brandname &lt;&gt; $old.brandname
+                     OR itemcode &lt;&gt; $old.itemcode)
+            </query>
+            <errormessage>item with specified item code already exists!</errormessage>
+          </emptycheck>
+          <!-- update item data -->
+          <query>
+            UPDATE Items SET
+              supid = $new.supid, brandname = $new.brandname, itemcode = $new.itemcode,
+              advpurchprice = $new.advpurchprice, advsellprice = $new.advsellprice, itemdesc = $new.itemdesc
+            WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no merchandise of item of brand from supplier has been purchased -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Purchases
+              WHERE supid = $new.supid
+                AND brandname = $new.brandname
+                AND itemcode = $new.itemcode
+            </query>
+            <errormessage>purchases of specified item kind, brand, and supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- ensure no merchandise of item of brand from supplier has been sold -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM SellItems
+              WHERE supid = $new.supid
+                AND brandname = $new.brandname
+                AND itemcode = $new.itemcode
+            </query>
+            <errormessage>sales of items of specified item kind, brand, and supplier already exist!</errormessage>
+          </emptycheck>
+          <!-- delete containers associated with items of brand from supplier -->
+          <query>
+            DELETE FROM Containers
+            WHERE supid = $new.supid
+              AND brandname = $new.brandname
+              AND itemcode = $new.itemcode
+          </query>
+          <!-- delete item catalogue items matching items of brand from supplier -->
+          <query>
+            DELETE FROM Items
+            WHERE supid = $new.supid
+              AND brandname = $new.brandname
+              AND itemcode = $new.itemcode
+          </query>
+          <!-- delete item data -->
+          <query>
+            DELETE FROM Items
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Master-Detail Link across Item Categories Screen -->
+  <masterdetail mcname="icat_suppliers" dcname="icat_brands">
+    <mdfield fname="supid"/>
+  </masterdetail>
+  <!-- Master-Detail Link across Item Categories Screen -->
+  <masterdetail mcname="icat_brands" dcname="icat_items">
+    <mdfield fname="supid"/>
+    <mdfield fname="brandname"/>
+  </masterdetail>
+  <!-- Purchases Screen control nodes -->
+  <control cname="pur_purchases">
+    <extractor>
+      <query>
+        SELECT purchnum, purchdate, purchdiscount, purchdesc, supid FROM Purchases
+        ORDER BY purchdate, supid, purchnum
+      </query>
+      <field fname="purchnum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="purchdiscount" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchdesc" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="pur_purchases_clist1">
+      <header fname="purchdate"/>
+      <header fname="supid"/>
+      <header fname="purchnum"/>
+    </selector>
+    <manipulator>
+      <exposer name="pur_purchases_purchdate_entry1" fname="purchdate"/>
+      <exposer name="pur_purchases_supid_entry1" fname="supid"/>
+      <exposer name="pur_purchases_purchnum_entry1" fname="purchnum"/>
+      <exposer name="pur_purchases_purchdiscount_spinbutton1" fname="purchdiscount"/>
+      <exposer name="pur_purchases_purchdesc_textview1" fname="purchdesc"/>
+      <executor>
+        <add name="pur_purchases_add_togglebutton1"/>
+        <modify name="pur_purchases_modify_togglebutton1"/>
+        <remove name="pur_purchases_remove_togglebutton1"/>
+        <submit name="pur_purchases_submit_togglebutton1"/>
+        <cancel name="pur_purchases_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM Purchases
+              WHERE purchnum = $new.purchnum
+            </query>
+            <errormessage>purchase with specified purchase number already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.supid = $new.supid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT supid FROM Suppliers
+                  WHERE supid = $new.supid
+                </query>
+                <errormessage>supplier with specified supplier ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert purchase data -->
+          <query>
+            INSERT INTO Purchases
+              (purchnum, supid, purchdate, purchdiscount, purchdesc)
+            VALUES
+              ($new.purchnum, $new.supid, $new.purchdate, $new.purchdiscount, $new.purchdesc)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM Purchases
+              WHERE purchnum = $new.purchnum
+                AND $new.purchnum &lt;&gt; $old.purchnum
+            </query>
+            <errormessage>purchase with specified purchase number already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.supid = $new.supid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT supid FROM Suppliers
+                  WHERE supid = $new.supid
+                </query>
+                <errormessage>supplier with specified supplier ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update purchase data -->
+          <query>
+            UPDATE Purchases SET
+              purchnum = $new.purchnum, supid = $new.supid, purchdate = $new.purchdate,
+              purchdiscount = $new.purchdiscount, purchdesc = $new.purchdesc
+            WHERE purchnum = $old.purchnum
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no items from given purchase have been received -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM ReceivedSupplierItems
+              WHERE purchnum = $new.purchnum
+            </query>
+            <errormessage>items received from specified purchase already exist!</errormessage>
+          </emptycheck>
+          <!-- delete items associated with purchase -->
+          <query>
+            DELETE FROM PurchaseItems
+            WHERE purchnum = $new.purchnum
+          </query>
+          <!-- delete purchase -->
+          <query>
+            DELETE FROM Purchases
+            WHERE purchnum = $new.purhnum
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <control cname="pur_purchaseitems">
+    <extractor>
+      <query>
+        SELECT purchnum, PI.supid, PI.brandname, PI.itemcode,
+               purchunitprice, numpurchased
+        FROM PurchaseItems PI, Items I
+        WHERE PI.supid = I.supid
+          AND PI.brandname = I.brandname
+          AND PI.itemcode = I.itemcode
+          AND purchnum = $ctl.pur_purchases.purchnum
+          AND PI.supid = $ctl.pur_purchases.supid
+      </query>
+      <field fname="purchnum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchunitprice" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="numpurchased" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="pur_purchaseitems_clist1">
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="numpurchased"/>
+      <header fname="purchunitprice"/>
+    </selector>
+    <manipulator>
+      <exposer name="pur_purchaseitems_brandname_entry1" fname="brandname"/>
+      <exposer name="pur_purchaseitems_itemcode_entry1" fname="itemcode"/>
+      <exposer name="pur_purchaseitems_numpurchased_spinbutton1" fname="numpurchased"/>
+      <exposer name="pur_purchaseitems_purchunitprice_spinbutton1" fname="purchunitprice"/>
+      <executor>
+        <add name="pur_items_add_togglebutton1"/>
+        <modify name="pur_items_modify_togglebutton1"/>
+        <remove name="pur_items_remove_togglebutton1"/>
+        <submit name="pur_items_submit_togglebutton1"/>
+        <cancel name="pur_items_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $new.purchnum
+                AND supid = $new.supid
+                AND brandname = $new.brandname
+                AND itemcode = $new.itemcode
+            </query>
+            <errormessage>quantity of specified item associated with specified purchase already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.brandname = $new.brandname AND $new.itemcode = $new.itemcode
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT supid FROM Items
+                  WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+                </query>
+                <errormessage>item with specified supplier ID, brand name, and item code does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert purchase item data -->
+          <query>
+            INSERT INTO PurchaseItems
+              (purchnum, supid, brandname, itemcode,
+               purchunitprice, numpurchased, numpurchsatisfied)
+            VALUES
+              ($new.purchnum, $new.supid, $new.brandname, $new.itemcode,
+               $new.purchunitprice, $new.numpurchased, $new.numpurchsatisfied)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $new.purchnum AND supid = $new.supid
+                AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND (purchnum &lt;&gt; $old.purchnum OR supid &lt;&gt; $old.supid
+                     OR brandname &lt;&gt; $old.brandname OR itemcode &lt;&gt; $old.itemcode)
+            </query>
+            <errormessage>quantity of specified item associated with specified purchase already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.brandname = $new.brandname AND $new.itemcode = $new.itemcode
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT supid FROM Items
+                  WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+                </query>
+                <errormessage>item with specified supplier ID, brand name, and item code does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update purchase item data -->
+          <query>
+            UPDATE PurchaseItems SET
+              purchunitprice = $new.purchunitprice,
+              numpurchased = $new.numpurchased,
+              numpurchsatisfied = $new.numpurchsatisfied
+            WHERE purchnum = $old.purchnum AND supid = $old.supid
+              AND brandname = $old.brandname AND itemcode = $old.itemcode
+          </query>
+        </updater>
+        <deleter>
+          <!-- -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM ReceivedSupplierItems
+              WHERE purchnum = $new.purchnum
+                AND supid = $new.supid
+                AND brandname = $new.brandname
+                AND itemcode = $new.itemcode
+            </query>
+            <errormessage>received quantity of specified item from specified purchase already exists!</errormessage>
+          </emptycheck>
+          <!-- delete purchase item data -->
+          <query>
+            DELETE FROM PurchaseItems
+            WHERE purchnum = $new.purchnum AND supid = $new.supid
+              AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Master-Detail Link across Purchases Screen -->
+  <masterdetail mcname="pur_purchases" dcname="pur_purchaseitems">
+    <mdfield fname="purchnum"/>
+    <mdfield fname="supid"/>
+  </masterdetail>
+  <!-- Suppliers Popup Screen control nodes -->
+  <clonecontrol cname="supd_suppliers" srccname="sup_suppliers">
+    <selector name="supd_suppliers_clist1">
+      <header fname="supid"/>
+      <header fname="supname"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="supd_supid_entry1" fname="supid"/>
+      <exposer name="supd_supname_entry1" fname="supname"/>
+      <cloneexecutor>
+        <add name="supd_add_togglebutton1"/>
+        <modify name="supd_modify_togglebutton1"/>
+        <remove name="supd_remove_togglebutton1"/>
+        <submit name="supd_submit_togglebutton1"/>
+        <cancel name="supd_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <!-- Send-Receive Links from Suppliers Popup Screen to Purchases Screen -->
+  <sendreceive scname="supd_suppliers" rcname="pur_purchases">
+    <maplet sfname="supid" rfname="supid"/>
+    <messenger name="supd_done_button1"/>
+  </sendreceive>
+  <!-- Brands and Items Screen Screen control nodes -->
+  <clonecontrol cname="brid_brands" srccname="icat_brands">
+    <cloneextractor>
+      <query>
+        SELECT supid, brandname FROM Brands
+        WHERE supid = $ctl.pur_purchases.supid
+        ORDER BY brandname
+      </query>
+    </cloneextractor>
+    <selector name ="brid_brands_clist1">
+      <header fname="brandname"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="brid_brandname_entry1" fname="brandname"/>
+      <cloneexecutor>
+        <add name="brid_brand_add_togglebutton1"/>
+        <modify name="brid_brand_modify_togglebutton1"/>
+        <remove name="brid_brand_remove_togglebutton1"/>
+        <submit name="brid_brand_submit_togglebutton1"/>
+        <cancel name="brid_brand_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <clonecontrol cname="brid_items" srccname="icat_items">
+    <cloneextractor>
+      <query>
+        SELECT supid, brandname, itemcode, advpurchprice, advsellprice, itemdesc FROM Items
+        WHERE supid = $ctl.brid_brands.supid AND brandname = $ctl.brid_brands.brandname
+        ORDER BY itemcode, advpurchprice, advsellprice
+      </query>
+    </cloneextractor>
+    <selector name="brid_items_clist1">
+      <header fname="itemcode"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="brid_itemcode_entry1" fname="itemcode"/>
+      <cloneexecutor>
+        <add name="brid_item_add_togglebutton1"/>
+        <modify name="brid_item_modify_togglebutton1"/>
+        <remove name="brid_item_remove_togglebutton1"/>
+        <submit name="brid_item_submit_togglebutton1"/>
+        <cancel name="brid_item_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <!-- Master-Detail Link from Purchases Screen to Brand Items Popup Screen -->
+  <masterdetail mcname="pur_purchases" dcname="brid_brands">
+    <mdfield fname="supid"/>
+  </masterdetail>
+  <!-- Master-Detail Link across Brand Items Popup Screen -->
+  <masterdetail mcname="brid_brands" dcname="brid_items">
+    <mdfield fname="brandname"/>
+  </masterdetail>
+  <!-- Send-Receive Links from Brand Items Popup Screen to Purchases Screen -->
+  <sendreceive scname="brid_brands" rcname="pur_purchaseitems">
+    <maplet sfname="brandname" rfname="brandname"/>
+    <messenger name="brid_done_button1"/>
+  </sendreceive>
+  <sendreceive scname="brid_items" rcname="pur_purchaseitems">
+    <maplet sfname="itemcode" rfname="itemcode"/>
+    <messenger name="brid_done_button1"/>
+  </sendreceive>
+  <!-- Purchased Items Received Screen control nodes -->
+  <control cname="pit_received">
+    <extractor>
+      <query>
+        SELECT purchrecdate, purchnum, supid,
+               brandname, itemcode, purchnumrec, numloose
+        FROM ReceivePurchasedItems NATURAL JOIN Items
+        ORDER BY purchrecdate, purchnum, supid,
+                 brandname, itemcode, purchnumrec
+      </query>
+      <field fname="purchrecdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="purchnum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchnumrec" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="pit_received_clist1">
+      <header fname="purchrecdate"/>
+      <header fname="purchnum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="purchnumrec"/>
+    </selector>
+    <manipulator>
+      <exposer name="pit_received_purchnum_entry1" fname="purchnum"/>
+      <exposer name="pit_received_supid_entry1" fname="supid"/>
+      <exposer name="pit_received_brandname_entry1" fname="brandname"/>
+      <exposer name="pit_received_itemcode_entry1" fname="itemcode"/>
+      <exposer name="pit_received_purchrecdate_entry1" fname="purchrecdate"/>
+      <exposer name="pit_received_purchnumrec_spinbutton1" fname="purchnumrec"/>
+      <executor>
+        <add name="pit_received_add_togglebutton1"/>
+        <modify name="pit_received_modify_togglebutton1"/>
+        <remove name="pit_received_remove_togglebutton1"/>
+        <submit name="pit_received_submit_togglebutton1"/>
+        <cancel name="pit_received_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT purchrecdate FROM ReceivePurchasedItems
+              WHERE purchnum = $old.purchnum AND supid = $old.supid
+                AND brandname = $old.brandname AND itemcode = $old.itemcode
+            </query>
+            <errormessage>quantity of received items from given purchase on specified date already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure quantity of received items to be added does not exceed quantity of purchased items -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $old.purchnum AND supid = $old.supid
+                AND brandname = $old.brandname AND itemcode = $old.itemcode
+                AND numpurchased &lt; purchnumrec
+            </query>
+            <errormessage>item quantity received would exceed item quantity on specified purchase!</errormessage>
+          </emptycheck>
+          <!-- update number of loose items -->
+          <query>
+            UPDATE Items SET numloose = numloose + $new.purchnumrec
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+          <!-- insert purchased items received data -->
+          <query>
+            INSERT INTO ReceivePurchasedItems
+              (purchrecdate, purchnum, supid,
+               brandname, itemcode, purchnumrec)
+            VALUES
+              ($new.purchrecdate, $new.purchnum, $new.supid,
+               $new.brandname, $new.itemcode, $new.purchnumrec)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $new.purchnum AND supid = $new.supid
+                AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND numpurchased &lt; purchnumrec
+                AND ($new.purchnum &lt;&gt; $old.purchnum OR $new.supid &lt;&gt; $old.supid
+                     OR $new.brandname &lt;&gt; $old.brandname OR $new.itemcode &lt;&gt; $old.itemcode)
+            </query>
+            <errormessage>quantity of received items from given purchase on specified date already exists!</errormessage>
+          </emptycheck>
+          <!--
+          <emptytest>
+            <query>
+            </query>
+            <emptycase>
+            </emptycase>
+            <nonemptycase>
+            </nonemptycase>
+          </emptytest>
+          <query>
+          </query>
+          -->
+        </updater>
+        <deleter>
+          <!-- ensure quantity of received items to be removed does not exceed quantity of loose items -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Items
+              WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+                AND numloose &lt; $new.purchnumrec
+            </query>
+            <errormessage>warehouse does not contain enough loose items!</errormessage>
+          </emptycheck>
+          <!-- update number of loose items -->
+          <query>
+            UPDATE Items SET numloose = numloose - $new.purchnumrec
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+          <!-- delete purchased items received data -->
+          <query>
+            DELETE FROM ReceivePurchasedItems
+            WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Purchased Items Returned Screen control nodes -->
+  <control cname="pit_returned">
+    <extractor>
+      <query>
+        SELECT purchretdate, purchnum, supid,
+               brandname, itemcode, purchnumret, numloose
+        FROM ReturnPurchasedItems NATURAL JOIN Items
+        ORDER BY purchretdate, purchnum, supid,
+                 brandname, itemcode, purchnumret
+      </query>
+      <field fname="purchretdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="purchnum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchnumret" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="pit_returned_clist1">
+      <header fname="purchretdate"/>
+      <header fname="purchnum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="purchnumret"/>
+    </selector>
+    <manipulator>
+      <exposer name="pit_returned_purchnum_entry1" fname="purchnum"/>
+      <exposer name="pit_returned_supid_entry1" fname="supid"/>
+      <exposer name="pit_returned_brandname_entry1" fname="brandname"/>
+      <exposer name="pit_returned_itemcode_entry1" fname="itemcode"/>
+      <exposer name="pit_returned_purchretdate_entry1" fname="purchretdate"/>
+      <exposer name="pit_returned_purchnumret_spinbutton1" fname="purchnumret"/>
+      <executor>
+        <add name="pit_returned_add_togglebutton1"/>
+        <modify name="pit_returned_modify_togglebutton1"/>
+        <remove name="pit_returned_remove_togglebutton1"/>
+        <submit name="pit_returned_submit_togglebutton1"/>
+        <cancel name="pit_returned_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure quantity of received items to be removed does not exceed quantity of loose items -->
+          <emptycheck>
+            <query>
+              SELECT supid FROM Items
+              WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+                AND numloose &lt; $new.purchnumrec
+            </query>
+            <errormessage>warehouse does not contain enough loose items!</errormessage>
+          </emptycheck>
+          <!-- update number of loose items -->
+          <query>
+            UPDATE Items SET numloose = numloose - $new.purchnumrec
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+          <!-- insert purchased items returned data -->
+          <query>
+            INSERT INTO ReturnPurchasedItems
+              (purchretdate, purchnum, supid,
+               brandname, itemcode, purchnumret)
+            VALUES
+              ($new.purchretdate, $new.purchnum, $new.supid,
+               $new.brandname, $new.itemcode, $new.purchnumret)
+          </query>
+        </inserter>
+        <updater>
+        </updater>
+        <deleter>
+         <!-- ensure quantity of received items to be added does not exceed quantity of purchased items -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $old.purchnum AND supid = $old.supid
+                AND brandname = $old.brandname AND itemcode = $old.itemcode
+                AND numpurchased &lt; purchnumrec
+            </query>
+            <errormessage>item quantity received would exceed item quantity on specified purchase!</errormessage>
+          </emptycheck>
+          <!-- update number of loose items -->
+          <query>
+            UPDATE Items SET numloose = numloose + $new.purchnumrec
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+          <!-- insert purchased items received data -->
+          <query>
+            INSERT INTO ReceivePurchasedItems
+              (purchrecdate, purchnum, supid,
+               brandname, itemcode, purchnumrec)
+            VALUES
+              ($new.purchrecdate, $new.purchnum, $new.supid,
+               $new.brandname, $new.itemcode, $new.purchnumrec)
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Purchased Items Refunded Screen control nodes -->
+  <control cname="pit_refunded">
+    <extractor>
+      <query>
+        SELECT purchrefdate, purchnum, supid,
+               brandname, itemcode, purchnumref
+        FROM RefundPurchasedItems
+        ORDER BY purchrefdate, purchnum, supid,
+                 brandname, itemcode, purchnumref
+      </query>
+      <field fname="purchrefdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="purchnum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchnumref" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="pit_refunded_clist1">
+      <header fname="purchrefdate"/>
+      <header fname="purchnum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="purchnumref"/>
+    </selector>
+    <manipulator>
+      <exposer name="pit_refunded_purchnum_entry1" fname="purchnum"/>
+      <exposer name="pit_refunded_supid_entry1" fname="supid"/>
+      <exposer name="pit_refunded_brandname_entry1" fname="brandname"/>
+      <exposer name="pit_refunded_itemcode_entry1" fname="itemcode"/>
+      <exposer name="pit_refunded_purchrefdate_entry1" fname="purchrefdate"/>
+      <exposer name="pit_refunded_purchnumref_spinbutton1" fname="purchnumref"/>
+      <executor>
+        <add name="pit_refunded_add_togglebutton1"/>
+        <modify name="pit_refunded_modify_togglebutton1"/>
+        <remove name="pit_refunded_remove_togglebutton1"/>
+        <submit name="pit_refunded_submit_togglebutton1"/>
+        <cancel name="pit_refunded_cancel_togglebutton1"/>
+        <inserter>
+        </inserter>
+        <updater>
+        </updater>
+        <deleter>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Pending Purchased Items Screen control nodes -->
+  <control cname="ppid_items">
+    <extractor>
+      <query>
+        SELECT purchnum, purchdate, supid, brandname, itemcode,
+               numpurchased, numpurchsatisfied,
+               numpurchased - numpurchsatisfied AS numpending,
+               numloose, numdamaged
+        FROM Purchases NATURAL JOIN PurchaseItems NATURAL JOIN Items
+        ORDER BY purchnum, purchdate, supid, brandname, itemcode,
+                 numpurchased, numpurchsatisfied, numpending,
+                 numloose, numdamaged
+      </query>
+      <field fname="purchnum" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="purchdate" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="numpurchased" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numpurchsatisfied" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numpending" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numloose" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numdamaged" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="ppid_clist1">
+      <header fname="purchnum"/>
+      <header fname="purchdate"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="numpurchased"/>
+      <header fname="numpurchsatisfied"/>
+      <header fname="numpending"/>
+      <header fname="numloose"/>
+      <header fname="numdamaged"/>
+    </selector>
+    <manipulator>
+      <exposer name="ppid_purchnum_entry1" fname="purchnum"/>
+      <exposer name="ppid_supid_entry1" fname="supid"/>
+      <exposer name="ppid_brandname_entry1" fname="brandname"/>
+      <exposer name="ppid_itemcode_entry1" fname="itemcode"/>
+      <exposer name="ppid_purchdate_entry1" fname="purchdate"/>
+      <exposer name="ppid_numpending_entry1" fname="numpending"/>
+    </manipulator>
+  </control>
+  <!-- Send-Receive Links from Pending Purchased Items Popup Screen to Purchased Items Received Screen -->
+  <sendreceive scname="ppid_items" rcname="pit_received">
+    <maplet sfname="purchnum" rfname="purchnum"/>
+    <maplet sfname="supid" rfname="supid"/>
+    <maplet sfname="brandname" rfname="brandname"/>
+    <maplet sfname="itemcode" rfname="itemcode"/>
+    <messenger name="ppid_done_button1"/>
+  </sendreceive>
+  <sendreceive scname="ppid_items" rcname="pit_returned">
+    <maplet sfname="purchnum" rfname="purchnum"/>
+    <maplet sfname="supid" rfname="supid"/>
+    <maplet sfname="brandname" rfname="brandname"/>
+    <maplet sfname="itemcode" rfname="itemcode"/>
+    <messenger name="ppid_done_button1"/>
+  </sendreceive>
+  <sendreceive scname="ppid_items" rcname="pit_refunded">
+    <maplet sfname="purchnum" rfname="purchnum"/>
+    <maplet sfname="supid" rfname="supid"/>
+    <maplet sfname="brandname" rfname="brandname"/>
+    <maplet sfname="itemcode" rfname="itemcode"/>
+    <messenger name="ppid_done_button1"/>
+  </sendreceive>
+  <!-- Container Categories Screen control nodes -->
+  <control cname="ccat_containercategories">
+    <extractor>
+      <query>
+        SELECT ccatid, supid, brandname, taxcat, ccatdesc, ccatlongdesc
+        FROM ContainerCategories
+      </query>
+      <field fname="ccatid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="taxcat" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="ccatdesc" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="ccatlongdesc" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="ccat_containercategories_clist1">
+      <header fname="ccatid"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="taxcat"/>
+    </selector>
+    <manipulator>
+      <exposer name="ccat_ccatid_entry1" fname="ccatid"/>
+      <exposer name="ccat_supid_entry1" fname="supid"/>
+      <exposer name="ccat_brandname_entry1" fname="brandname"/>
+      <exposer name="ccat_taxcat_entry1" fname="taxcat"/>
+      <exposer name="ccat_ccatdesc_entry1" fname="ccatdesc"/>
+      <exposer name="ccat_ccatlongdesc_textview1" fname="ccatlongdesc"/>
+      <executor>
+        <add name="ccat_add_togglebutton1"/>
+        <modify name="ccat_modify_togglebutton1"/>
+        <remove name="ccat_remove_togglebutton1"/>
+        <submit name="ccat_submit_togglebutton1"/>
+        <cancel name="ccat_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+	    <query>
+              SELECT ccatid FROM ContainerCategories
+              WHERE ccatid = $new.ccatid
+            </query>
+            <errormessage>container category with specified container category ID already exists!</errormessage>
+          </emptycheck>
+          <!-- insert container category data -->
+          <query>
+            INSERT INTO ContainerCategories (ccatid, supid, brandname, taxcat, ccatdesc, ccatlongdesc)
+            VALUES ($new.ccatid, $new.supid, $new.brandname, $new.taxcat, $new.ccatdesc, $new.ccatlongdesc)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT ccatid FROM ContainerCategories
+              WHERE ccatid = $new.ccatid
+                AND $new.ccatid &lt;&gt; $old.ccatid
+            </query>
+            <errormessage>container category with specified container category ID already exists!</errormessage>
+          </emptycheck>
+          <!-- update container category data -->
+          <query>
+            UPDATE ContainerCategories SET
+              ccatid = $new.ccatid, supid = $new.supid, brandname = $new.brandname,
+              taxcat = $new.taxcat, ccatdesc = $new.ccatdesc, ccatlongdesc = $new.ccatlongdesc
+            WHERE
+              ccatid = $old.ccatid
+          </query>
+        </updater>
+        <deleter>
+          <!-- check that all containers associated with given container category are empty -->
+          <emptycheck>
+            <query>
+              SELECT ccatid FROM Containers
+              WHERE ccatid = $old.ccatid
+                AND numstored > 0
+            </query>
+            <errormessage>purchases from specified supplier already exist!</errormessage>(checkme!)
+          </emptycheck>
+          <!-- delete containers associated with given container category -->
+          <query>
+            DELETE FROM Containers
+            WHERE ccatid = $old.ccatid
+          </query>
+          <!-- delete container category data -->
+          <query>
+            DELETE FROM ContainerCategories
+            WHERE ccatid = $old.ccatid
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Suppliers and Brands Popup Screen control nodes -->
+  <clonecontrol cname="subd_suppliers" srccname="sup_suppliers">
+    <selector name="subd_suppliers_clist1">
+      <header fname="supid"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="subd_supid_entry1" fname="supid"/>
+      <cloneexecutor>
+        <add name="subd_supplier_add_togglebutton1"/>
+        <modify name="subd_supplier_modify_togglebutton1"/>
+        <remove name="subd_supplier_remove_togglebutton1"/>
+        <submit name="subd_supplier_submit_togglebutton1"/>
+        <cancel name="subd_supplier_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <clonecontrol cname="subd_brands" srccname="icat_brands">
+    <cloneextractor>
+      <query>
+        SELECT supid, brandname FROM Brands
+        WHERE supid = $ctl.subd_suppliers.supid
+        ORDER BY brandname
+      </query>
+    </cloneextractor>
+    <selector name="subd_brands_clist1">
+      <header fname="brandname"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="subd_brandname_entry1" fname="brandname"/>
+      <cloneexecutor>
+        <add name="subd_brand_add_togglebutton1"/>
+        <modify name="subd_brand_modify_togglebutton1"/>
+        <remove name="subd_brand_remove_togglebutton1"/>
+        <submit name="subd_brand_submit_togglebutton1"/>
+        <cancel name="subd_brand_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <!-- Master-Detail Link across Suppliers and Brands Popup Screen -->
+  <masterdetail mcname="subd_suppliers" dcname="subd_brands">
+    <mdfield fname="supid"/>
+  </masterdetail>
+  <!-- Send-Receive Links from Suppliers and Brands Popup Screen to Container Categories Screen -->
+  <sendreceive scname="subd_suppliers" rcname="ccat_containercategories">
+    <maplet sfname="supid" rfname="supid"/>
+    <messenger name="subd_done_button1"/>
+  </sendreceive>
+  <sendreceive scname="subd_brands" rcname="ccat_containercategories">
+    <maplet sfname="brandname" rfname="brandname"/>
+    <messenger name="subd_done_button1"/>
+  </sendreceive>
+  <!-- Tax Categories Popup Screen control nodes -->
+  <control cname="tcatd_taxcategories">
+    <extractor>
+      <query>
+        SELECT taxcat, taxper
+        FROM TaxCategories
+        ORDER BY taxcat, taxper
+      </query>
+      <field fname="taxcat" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="taxper" type="GDA_VALUE_TYPE_NUMERIC"/>
+    </extractor>
+    <selector name="tcatd_clist1">
+      <header fname="taxcat"/>
+      <header fname="taxper"/>
+    </selector>
+    <manipulator>
+      <exposer name="tcatd_taxcat_entry1" fname="taxcat"/>
+      <exposer name="tcatd_taxper_spinbutton1" fname="taxper"/>
+      <executor>
+        <add name="tcatd_add_togglebutton1"/>
+        <modify name="tcatd_modify_togglebutton1"/>
+        <remove name="tcatd_remove_togglebutton1"/>
+        <submit name="tcatd_submit_togglebutton1"/>
+        <cancel name="tcatd_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT taxcat FROM TaxCategories
+              WHERE taxcat = $new.taxcat
+            </query>
+            <errormessage>tax category with specified tax category descriptor already exists!</errormessage>
+          </emptycheck>
+          <!-- insert tax category data -->
+          <query>
+            INSERT INTO TaxCategories
+              (taxcat, taxper)
+            VALUES
+              ($new.taxcat, $new.taxper)
+          </query>
+        </inserter>
+        <!-- update tax category data -->
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT taxcat FROM TaxCategories
+              WHERE taxcat = $new.taxcat
+                AND $new.taxcat &lt;&gt; $old.taxcat
+            </query>
+            <errormessage>tax category with specified tax category descriptor already exists!</errormessage>
+          </emptycheck>
+          <!-- update tax category data -->
+          <query>
+            UPDATE TaxCategories SET
+              taxcat = $new.taxcat, taxper = $new.taxper
+            WHERE taxcat = $old.taxcat
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no container categories associated with given tax category exist -->
+          <emptycheck>
+            <query>
+              SELECT taxcat FROM ContainerCategories
+              WHERE taxcat = $old.taxcat
+            </query>
+            <errormessage>container categories associated with given tax category already exist!</errormessage>
+          </emptycheck>
+          <!-- delete tax category data -->
+          <query>
+            DELETE FROM TaxCategories
+            WHERE taxcat = $new.taxcat
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Send-Receive Link from Suppliers and Brands Popup Screen to Tax Categories Screen -->
+  <sendreceive scname="tcatd_taxcategories" rcname="ccat_containercategories">
+    <maplet sfname="taxcat" rfname="taxcat"/>
+    <messenger name="tcatd_done_button1"/>
+  </sendreceive>
+  <!-- Containers Screen containers control node -->
+  <control cname="cont_containers">
+    <extractor>
+      <query>
+        SELECT ccatid, contnum, supid, brandname, itemcode, numstored
+        FROM Containers
+      </query>
+      <field fname="ccatid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="contnum" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="numstored" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="cont_containers_clist1">
+      <header fname="ccatid"/>
+      <header fname="contnum"/>
+      <header fname="itemcode"/>
+      <header fname="numstored"/>
+    </selector>
+    <manipulator>
+      <exposer name="cont_ccatid_entry1" fname="ccatid"/>
+      <exposer name="cont_itemcode_entry1" fname="itemcode"/>
+      <exposer name="cont_supid_entry1" fname="supid"/>
+      <exposer name="cont_brandname_entry1" fname="brandname"/>
+      <exposer name="cont_contnum_spinbutton1" fname="contnum"/>
+      <exposer name="cont_numstored_spinbutton1" fname="numstored"/>
+      <executor>
+        <add name="cont_add_togglebutton1"/>
+        <modify name="cont_modify_togglebutton1"/>
+        <remove name="cont_remove_togglebutton1"/>
+        <submit name="cont_submit_togglebutton1"/>
+        <cancel name="cont_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            SELECT ccatid FROM Containers
+            WHERE ccatid = $new.ccatid AND contnum = $new.contnum
+            <errormessage>container with specified category ID and container number already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <nonemptycheck>
+            <query>
+              SELECT ccatid FROM ContainerCategories
+              WHERE ccatid = $new.ccatid
+            </query>
+            <errormessage>container category with specified container category ID does not exist!</errormessage>
+          </nonemptycheck>
+          <!-- ensure unique key uniqueness -->
+          <emptycheck>
+            SELECT supid FROM Containers
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+            <errormessage>container with specified category ID and container number already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <nonemptycheck>
+            <query>
+              SELECT supid FROM Items
+              WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+            </query>
+            <errormessage>item with specified supplier ID, brand name, and item code does not exist!</errormessage>
+          </nonemptycheck>
+          <!-- ensure stored item quantity to be added to container is not larger than number of loose items -->
+          <nonemptycheck>
+            <query>
+              SELECT numloose FROM Items
+              WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND numloose &lt; $new.numstored
+            </query>
+            <errormessage>warehouse does not contain enough loose items!</errormessage>
+          </nonemptycheck>
+          <!-- grab loose items -->
+          <query>
+            UPDATE Items SET numloose = numloose - $new.numstored
+            WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+          </query>
+          <!-- add container with corresponding items -->
+          <query>
+            INSERT INTO Containers
+              (ccatid, contnum, supid, brandname, itemcode, numstored)
+            VALUES
+              ($new.ccatid, $new.contnum, $new.supid, $new.brandname, $new.itemcode, $new.numstored)
+          </query>
+        </inserter>
+        <updater>
+        </updater>
+        <deleter>
+          <query>
+            UPDATE Items SET numloose = numloose - $old.numstored
+            WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode =  $old.itemcode
+          </query>
+          <query>
+            DELETE FROM Containers
+            WHERE ccatid = $old.ccatid AND contnum = $old.contnum
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <control cname="cont_items">
+    <extractor>
+      <query>
+        SELECT supid, brandname, itemcode, numloose FROM Items
+      </query>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="numloose" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="cont_items_clist1">
+      <header fname="itemcode"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="numloose"/>
+    </selector>
+  </control>
+  <control cname="cont_categories">
+    <extractor>
+      <query>
+        SELECT ccatid, supid, brandname, taxcat, ccatdesc FROM ContainerCategories
+        WHERE supid = $ctl.cont_items.supid AND brandname = $ctl.cont_items.brandname
+      </query>
+      <field fname="ccatid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="taxcat" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="ccatdesc" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="cont_categories_clist1">
+      <header fname="ccatid"/>
+      <header fname="ccatdesc"/>
+      <header fname="taxcat"/>
+    </selector>
+  </control>
+  <!-- Master-Detail Link across Inventory Screen -->
+  <masterdetail mcname="cont_items" dcname="cont_categories">
+    <mdfield fname="supid"/>
+    <mdfield fname="brandname"/>
+  </masterdetail>
+  <!-- Sales Screen sales control node -->
+  <control cname="sal_sales">
+    <extractor>
+      <query>
+        SELECT salenum, saledate, repid, repsaleslocation, cusid, salediscount, saledesc FROM Sales
+        ORDER BY saledate, salenum, repid, repsaleslocation, cusid
+      </query>
+      <field fname="salenum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="saledate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="repid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="repsaleslocation" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="cusid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="salediscount" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="saledesc" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="sal_sales_clist1">
+      <header fname="saledate"/>
+      <header fname="salenum"/>
+      <header fname="repid"/>
+      <header fname="repsaleslocation"/>
+      <header fname="cusid"/>
+    </selector>
+    <manipulator>
+      <exposer name="sal_sales_saledate_entry1" fname="saledate"/>
+      <exposer name="sal_sales_salenum_spinbutton1" fname="salenum"/>
+      <exposer name="sal_sales_repid_entry1" fname="repid"/>
+      <exposer name="sal_sales_repsaleslocation_entry1" fname="repsaleslocation"/>
+      <exposer name="sal_sales_cusid_entry1" fname="cusid"/>
+      <exposer name="sal_sales_salediscount_spinbutton1" fname="salediscount"/>
+      <exposer name="sal_sales_saledesc_textview1" fname="saledesc"/>
+      <executor>
+        <add name="sal_sales_add_togglebutton1"/>
+        <modify name="sal_sales_modify_togglebutton1"/>
+        <remove name="sal_sales_remove_togglebutton1"/>
+        <submit name="sal_sales_submit_togglebutton1"/>
+        <cancel name="sal_sales_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM Sales
+              WHERE salenum = $new.salenum
+            </query>
+            <errormessage>sale with specified sale number already exists!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.repid = $new.repid AND $new.repsaleslocation = $new.repsaleslocation
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT repid FROM Representatives
+                  WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+                </query>
+                <errormessage>representative with specified representative ID and sales location does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.cusid = $new.cusid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT cusid FROM Customers
+                  WHERE cusid = $new.cusid
+                </query>
+                <errormessage>customer with specified customer ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- insert sale data -->
+          <query>
+            INSERT INTO Sales
+              (salenum, saledate, repid, repsaleslocation, cusid, salediscount, saledesc)
+            VALUES
+              ($new.salenum, $new.saledate, $new.repid, $new.repsaleslocation, $new.cusid, $new.salediscount, $new.saledesc)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM Sales
+              WHERE salenum = $new.salenum
+                AND $new.salenum &lt;&gt; $old.salenum
+            </query>
+            <errormessage>sale with specified sale number does not exist!</errormessage>
+          </emptycheck>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.repid = $new.repid AND $new.repsaleslocation = $new.repsaleslocation
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT repid FROM Representatives
+                  WHERE repid = $new.repid AND repsaleslocation = $new.repsaleslocation
+                </query>
+                <errormessage>representative with specified representative ID and sales location does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- ensure foreign key constraint is met -->
+          <emptytest>
+            <query>
+              SELECT NULL WHERE $new.cusid = $new.cusid
+            </query>
+            <nonemptycase>
+              <nonemptycheck>
+                <query>
+                  SELECT cusid FROM Customers
+                  WHERE cusid = $new.cusid
+                </query>
+                <errormessage>customer with specified customer ID does not exist!</errormessage>
+              </nonemptycheck>
+            </nonemptycase>
+          </emptytest>
+          <!-- update sale data -->
+          <query>
+            UPDATE Sales SET
+              salenum = $new.salenum, saledate = $new.saledate,
+              repid = $new.repid, repsaleslocation = $new.repsaleslocation,
+              cusid = $new.cusid, salediscount = $new.salediscount, saledesc = $new.saledesc
+            WHERE salenum = $old.salenum
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure no items from given sale have been sent -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM SendSoldItems
+              WHERE salenum = $old.salenum
+            </query>
+            <errormessage>items sent from specified sale already exist!</errormessage>
+          </emptycheck>
+          <!-- delete sale items associated with sale -->
+          <query>
+            DELETE FROM SellItems
+            WHERE salenum = $old.salenum
+          </query>
+          <!-- delete sale data -->
+          <query>
+            DELETE FROM Sales
+            WHERE salenum = $old.salenum
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Send-Receive Link from Representatives Popup Screen to Sales Screen -->
+  <sendreceive scname="repd_representatives" rcname="sal_sales">
+    <maplet sfname="repid" rfname="repid"/>
+    <maplet sfname="repsaleslocation" rfname="repsaleslocation"/>
+    <messenger name="repd_done_button1"/>
+  </sendreceive>
+  <!-- Send-Receive Link from Customers Popup Screen to Sales Screen -->
+  <sendreceive scname="cusd_customers" rcname="sal_sales">
+    <maplet sfname="cusid" rfname="cusid"/>
+    <messenger name="cusd_done_button1"/>
+  </sendreceive>
+  <!-- Sales Screen sell items control node -->
+  <control cname="sal_sellitems">
+    <extractor>
+      <query>
+        SELECT salenum, supid, brandname, itemcode, fromccatid, fromcontnum, numsold, saleunitprice
+        FROM Sales NATURAL JOIN SellItems
+        WHERE salenum = $ctl.sal_sales.salenum
+      </query>
+      <field fname="salenum" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="fromccatid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="fromcontnum" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="numsold" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="saleunitprice" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="sal_sellitems_clist1">
+      <header fname="fromccatid"/>
+      <header fname="fromcontnum"/>
+      <header fname="numsold"/>
+      <header fname="saleunitprice"/>
+    </selector>
+    <manipulator>
+      <exposer name="sal_sellitems_fromccatid_entry1" fname="fromccatid"/>
+      <exposer name="sal_sellitems_fromcontnum_entry1" fname="fromcontnum"/>
+      <exposer name="sal_sellitems_supid_entry1" fname="supid"/>
+      <exposer name="sal_sellitems_brandname_entry1" fname="brandname"/>
+      <exposer name="sal_sellitems_itemcode_entry1" fname="itemcode"/>
+      <exposer name="sal_sellitems_numsold_spinbutton1" fname="numsold"/>
+      <exposer name="sal_sellitems_saleunitprice_spinbutton1" fname="saleunitprice"/>
+      <executor>
+        <add name="sal_sellitems_add_togglebutton1"/>
+        <modify name="sal_sellitems_modify_togglebutton1"/>
+        <remove name="sal_sellitems_remove_togglebutton1"/>
+        <submit name="sal_sellitems_submit_togglebutton1"/>
+        <cancel name="sal_sellitems_cancel_togglebutton1"/>
+        <inserter>
+          <!-- ensure primary key uniqueness -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM SellItems
+              WHERE salenum = $new.salenum AND supid = $new.supid
+                AND brandname = $new.brandname AND itemcode = $new.itemcode
+            </query>
+            <errormessage>item included as part of specified sale already exists!</errormessage>
+          </emptycheck>
+          <!-- insert sale item data -->
+          <query>
+            INSERT INTO SellItems
+              (salenum, supid, brandname, itemcode, fromccatid, fromcontnum, numsold, saleunitprice)
+            VALUES
+              ($new.salenum, $new.supid, $new.brandname, $new.itemcode, $new.fromccatid, $new.fromcontnum, $new.numsold, $new.saleunitprice)
+          </query>
+        </inserter>
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM SellItems
+              WHERE salenum = $new.salenum AND supid = $new.supid
+                AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND ($new.salenum &lt;&gt; $old.salenum OR $new.supid &lt;&gt; $old.supid
+                     OR $new.brandname &lt;&gt; $old.brandname OR $new.itemcode &lt;&gt; $old.itemcode)
+            </query>
+            <errormessage>item included as part of specified sale already exists!</errormessage>
+          </emptycheck>
+          <!-- update sale item data -->
+          <query>
+            UPDATE SellItems SET
+              salenum = $new.salenum, supid = $new.supid, brandname = $new.brandname, itemcode = $new.itemcode,
+              fromccatid = $new.fromccatid, fromcontnum = $new.fromcontnum, numsold = $new.numsold, saleunitprice = $new.saleunitprice
+            WHERE salenum = $old.salenum AND supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+          </query>
+        </updater>
+        <deleter>
+          <!-- ensure item from given sale has not been sent -->
+          <emptycheck>
+            <query>
+              SELECT salenum FROM SendSoldItems
+              WHERE salenum = $old.salenum AND supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+            </query>
+            <errormessage>specified item from specified sale already sent!</errormessage>
+          </emptycheck>
+          <!-- delete sale item data -->
+          <query>
+            DELETE FROM SellItems
+            WHERE salenum = $old.salenum AND supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Master-Detail Link across Sales Screen -->
+  <masterdetail mcname="sal_sales" dcname="sal_sellitems">
+    <mdfield fname="salenum"/>
+  </masterdetail>
+  <!-- Pending Sold Items Popup Screen control nodes -->
+  <control cname="psid_items">
+    <extractor>
+      <query>
+        SELECT salenum, saledate, supid, brandname, itemcode,
+               fromccatid, fromcontnum, numsold, numsoldsatisfied, numsold - numsoldsatisfied AS numpending
+        FROM SellItems NATURAL JOIN Sales
+      </query>
+      <field fname="salenum" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="saledate" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="supid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="ccatid" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="contnum" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numsold" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numsatisfied" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="numpending" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="psid_items_clist1">
+      <header fname="salenum"/>
+      <header fname="saledate"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="ccatid"/>
+      <header fname="contnum"/>
+      <header fname="numsold"/>
+      <header fname="numsatisfied"/>
+      <header fname="numpending"/>
+    </selector>
+  </control>
+  <control cname="psid_itemsused">
+    <extractor>
+      <query>
+        SELECT supid AS supidused, brandname AS brandnameused, itemcode AS itemcodeused
+        FROM Items
+      </query>
+      <field fname="supidused" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandnameused" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcodeused" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector name="psid_itemsused_clist1">
+      <header fname="supidused"/>
+      <header fname="brandnameused"/>
+      <header fname="itemcodeused"/>
+    </selector>
+  </control>
+  <!-- Send-Receive Link from Pending Sold Items Popup Screen to Sold Items Screen -->
+  <sendreceive scname="psid_items" rcname="sal_sellitems">
+    <maplet sfname="ccatid" rfname="fromccatid"/>
+    <maplet sfname="contnum" rfname="fromcontnum"/>
+    <maplet sfname="supid" rfname="supid"/>
+    <maplet sfname="brandname" rfname="brandname"/>
+    <maplet sfname="itemcode" rfname="itemcode"/>
+    <messenger name="psid_done_button1"/>
+  </sendreceive>
+<!--
+  <control>
+    <extractor>
+      <query>
+        SELECT foo
+        FROM Foo
+      </query>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+    </extractor>
+    <selector>
+      <header fname=""/>
+    </selector>
+    <manipulator>
+      <exposer name="tcatd_taxcat_entry1" fname="taxcat"/>
+      <exposer name="tcatd_taxper_spinbutton1" fname="taxper"/>
+      <executor>
+        <add name="tcatd_add_togglebutton1"/>
+        <modify name="tcatd_modify_togglebutton1"/>
+        <remove name="tcatd_remove_togglebutton1"/>
+        <submit name="tcatd_submit_togglebutton1"/>
+        <cancel name="tcatd_cancel_togglebutton1"/>
+        <inserter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </inserter>
+        <updater>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </updater>
+        <deleter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+-->
+  <!-- Representatives Popup Screen control nodes -->
+  <clonecontrol cname="repd_representatives" srccname="rep_representatives">
+    <selector name="repd_representatives_clist1">
+      <header fname="repid"/>
+      <header fname="repname"/>
+      <header fname="repsaleslocation"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="repd_repid_entry1" fname="repid"/>
+      <exposer name="repd_repname_entry1" fname="repname"/>
+      <exposer name="repd_repsaleslocation_entry1" fname="repsaleslocation"/>
+      <cloneexecutor>
+        <add name="repd_add_togglebutton1"/>
+        <modify name="repd_modify_togglebutton1"/>
+        <remove name="repd_remove_togglebutton1"/>
+        <submit name="repd_submit_togglebutton1"/>
+        <cancel name="repd_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <!-- Customers Popup Screen control nodes -->
+  <clonecontrol cname="cusd_customers" srccname="cus_customers">
+    <selector name="cusd_customers_clist1">
+      <header fname="cusid"/>
+      <header fname="cusname"/>
+    </selector>
+    <clonemanipulator>
+      <exposer name="cusd_cusid_entry1" fname="cusid"/>
+      <exposer name="cusd_cusname_entry1" fname="cusname"/>
+      <cloneexecutor>
+        <add name="cusd_add_togglebutton1"/>
+        <modify name="cusd_modify_togglebutton1"/>
+        <remove name="cusd_remove_togglebutton1"/>
+        <submit name="cusd_submit_togglebutton1"/>
+        <cancel name="cusd_cancel_togglebutton1"/>
+      </cloneexecutor>
+    </clonemanipulator>
+  </clonecontrol>
+  <!-- Sold Items Sent Screen control nodes -->
+  <control cname="sit_sent">
+    <extractor>
+      <query>
+        SELECT salesenddate, salenum, supid, brandname, itemcode, supidused, brandnameused, itemcodeused, salenumsent, saleinvnum
+        FROM SendSoldItems
+      </query>
+      <field fname="salesenddate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="salenum" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supidused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandnameused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcodeused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="salenumsent" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="saleinvnum" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="sit_sent_clist1">
+      <header fname="salesenddate"/>
+      <header fname="salenum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="supidused"/>
+      <header fname="brandnameused"/>
+      <header fname="itemcodeused"/>
+      <header fname="salenumsent"/>
+    </selector>
+    <manipulator>
+      <exposer name="sit_sent_salesenddate_entry1" fname="salesenddate"/>
+      <exposer name="sit_sent_salenum_entry1" fname="salenum"/>
+      <exposer name="sit_sent_supid_entry1" fname="supid"/>
+      <exposer name="sit_sent_brandname_entry1" fname="brandname"/>
+      <exposer name="sit_sent_itemcode_entry1" fname="itemcode"/>
+      <exposer name="sit_sent_supidused_entry1" fname="supidused"/>
+      <exposer name="sit_sent_brandnameused_entry1" fname="brandnameused"/>
+      <exposer name="sit_sent_itemcodeused_entry1" fname="itemcodeused"/>
+      <exposer name="sit_sent_salenumsent_spinbutton1" fname="salenumsent"/>
+      <exposer name="sit_sent_saleinvnum_spinbutton1" fname="saleinvnum"/>
+      <executor>
+        <add name="sit_sent_add_togglebutton1"/>
+        <modify name="sit_sent_modify_togglebutton1"/>
+        <remove name="sit_sent_remove_togglebutton1"/>
+        <submit name="sit_sent_submit_togglebutton1"/>
+        <cancel name="sit_sent_cancel_togglebutton1"/>
+        <inserter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </inserter>
+        <updater>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </updater>
+        <deleter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Sold Items Returned Screen control nodes -->
+  <control cname="sit_returned">
+    <extractor>
+      <query>
+        SELECT salerecdate, salenum, supid, brandname, itemcode, supidused, brandnameused, itemcodeused, salenumrec
+        FROM ReceiveSoldItems
+      </query>
+      <field fname="salerecdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="salenum" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supidused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandnameused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcodeused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="salenumrec" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="sit_returned_clist1">
+      <header fname="salerecdate"/>
+      <header fname="salenum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="supidused"/>
+      <header fname="brandnameused"/>
+      <header fname="itemcodeused"/>
+      <header fname="salenumrec"/>
+    </selector>
+    <manipulator>
+      <exposer name="sit_returned_saleretdate_entry1" fname="salerecdate"/>
+      <exposer name="sit_returned_salenum_entry1" fname="salenum"/>
+      <exposer name="sit_returned_supid_entry1" fname="supid"/>
+      <exposer name="sit_returned_brandname_entry1" fname="brandname"/>
+      <exposer name="sit_returned_itemcode_entry1" fname="itemcode"/>
+      <exposer name="sit_returned_supidused_entry1" fname="supidused"/>
+      <exposer name="sit_returned_brandnameused_entry1" fname="brandnameused"/>
+      <exposer name="sit_returned_itemcodeused_entry1" fname="itemcodeused"/>
+      <exposer name="sit_returned_salenumret_spinbutton1" fname="salenumrec"/>
+      <executor>
+        <add name="sit_returned_add_togglebutton1"/>
+        <modify name="sit_returned_modify_togglebutton1"/>
+        <remove name="sit_returned_remove_togglebutton1"/>
+        <submit name="sit_returned_submit_togglebutton1"/>
+        <cancel name="sit_returned_cancel_togglebutton1"/>
+        <inserter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </inserter>
+        <updater>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </updater>
+        <deleter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- Sold Items Refunded Screen control nodes -->
+  <control cname="sit_refunded">
+    <extractor>
+      <query>
+        SELECT salerefdate, salenum, supid, brandname, itemcode, supidused, brandnameused, itemcodeused, salenumref
+        FROM RefundSoldItems
+      </query>
+      <field fname="salerefdate" required="yes" type="GDA_VALUE_TYPE_DATE"/>
+      <field fname="salenum" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+      <field fname="supid" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandname" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcode" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="supidused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="brandnameused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="itemcodeused" required="yes" type="GDA_VALUE_TYPE_STRING"/>
+      <field fname="salenumref" required="yes" type="GDA_VALUE_TYPE_INTEGER"/>
+    </extractor>
+    <selector name="sit_refunded_clist1">
+      <header fname="salerefdate"/>
+      <header fname="salenum"/>
+      <header fname="supid"/>
+      <header fname="brandname"/>
+      <header fname="itemcode"/>
+      <header fname="supidused"/>
+      <header fname="brandnameused"/>
+      <header fname="itemcodeused"/>
+      <header fname="salenumref"/>
+    </selector>
+    <manipulator>
+      <exposer name="sit_refunded_salerefdate_entry1" fname="salerefdate"/>
+      <exposer name="sit_refunded_salenum_entry1" fname="salenum"/>
+      <exposer name="sit_refunded_supid_entry1" fname="supid"/>
+      <exposer name="sit_refunded_brandname_entry1" fname="brandname"/>
+      <exposer name="sit_refunded_itemcode_entry1" fname="itemcode"/>
+      <exposer name="sit_refunded_supidused_entry1" fname="supidused"/>
+      <exposer name="sit_refunded_brandnameused_entry1" fname="brandnameused"/>
+      <exposer name="sit_refunded_itemcodeused_entry1" fname="itemcodeused"/>
+      <exposer name="sit_refunded_salenumref_spinbutton1" fname="salenumref"/>
+      <executor>
+        <add name="sit_refunded_add_togglebutton1"/>
+        <modify name="sit_refunded_modify_togglebutton1"/>
+        <remove name="sit_refunded_remove_togglebutton1"/>
+        <submit name="sit_refunded_submit_togglebutton1"/>
+        <cancel name="sit_refunded_cancel_togglebutton1"/>
+        <inserter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </inserter>
+        <updater>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </updater>
+        <deleter>
+          <emptycheck>
+            <query>
+            </query>
+            <errormessage>!</errormessage>
+          </emptycheck>
+          <query>
+          </query>
+        </deleter>
+      </executor>
+    </manipulator>
+  </control>
+  <!-- instant observers needed here -->
+  <!-- History Screen control nodes -->
+<!--
+  <control cname="">
+    <extractor>
+    </extractor>
+    <selector>
+    </selector>
+  </control>
+  <control cname="">
+    <extractor>
+    </extractor>
+    <selector>
+    </selector>
+  </control>
+-->
+</datagui>

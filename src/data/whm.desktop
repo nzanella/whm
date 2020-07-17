@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Warehouse Manager
+Comment=Warehouse Management System
+Icon=whm.xpm
+TryExec=whm
+Exec=whm
+Categories=Application;Office;Finance;Utility;GNOME;GTK

@@ -1,0 +1,90 @@
+        <updater>
+          <!-- ensure primary key uniqueness in case primary key is modified -->
+          <emptycheck>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $new.purchnum AND supid = $new.supid
+                AND brandname = $new.brandname AND itemcode = $new.itemcode
+                AND numpurchased &lt; purchnumrec
+                AND ($new.purchnum &lt;&gt; $old.purchnum OR $new.supid &lt;&gt; $old.supid
+                     OR $new.brandname &lt;&gt; $old.brandname OR $new.itemcode &lt;&gt; $old.itemcode)
+            </query>
+            <errormessage>quantity of received items from given purchase on specified date already exists!</errormessage>
+          </emptycheck>
+
+          <!-- check whether primary key has changed -->
+          <emptytest>
+            <query>
+              SELECT purchnum FROM PurchaseItems
+              WHERE purchnum = $new.purchnum AND purchnum = $old.purchnum
+                AND supid = $new.supid AND supid = $old.supid
+                AND brandname = $new.brandname AND brandname = $old.brandname
+                AND itemcode = $new.itemcode AND itemcode = $old.itemcode
+            </query>
+            <!-- primary key has changed -->
+            <emptycase>
+
+              <!-- ensure old quantity of old received items to be removed does not exceed quantity of loose items -->
+              <emptycheck>
+                <query>
+                  SELECT supid FROM Items
+                  WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+                    AND numloose &lt; $new.purchnumrec
+                </query>
+                <errormessage>warehouse does not contain enough loose items!</errormessage>
+              </emptycheck>
+              <!-- update number of loose items -->
+              <query>
+                UPDATE Items SET numloose = numloose - $new.purchnumrec
+                WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+              </query>
+              <!-- delete purchased items received data -->
+              <query>
+                DELETE FROM ReceivePurchasedItems
+                WHERE supid = $old.supid AND brandname = $old.brandname AND itemcode = $old.itemcode
+              </query>
+
+              <!-- ensure primary key uniqueness -->
+              <emptycheck>
+                <query>
+                  SELECT purchrecdate FROM ReceivePurchasedItems
+                  WHERE purchnum = $old.purchnum AND supid = $old.supid
+                    AND brandname = $old.brandname AND itemcode = $old.itemcode
+                </query>
+                <errormessage>quantity of received items from given purchase on specified date already exists!</errormessage>
+              </emptycheck>
+              <!-- ensure quantity of received items to be added does not exceed quantity of purchased items -->
+              <emptycheck>
+                <query>
+                  SELECT purchnum FROM PurchaseItems
+                  WHERE purchnum = $old.purchnum AND supid = $old.supid
+                    AND brandname = $old.brandname AND itemcode = $old.itemcode
+                    AND numpurchased &lt; purchnumrec
+                </query>
+                <errormessage>item quantity received would exceed item quantity on specified purchase!</errormessage>
+              </emptycheck>
+              <!-- update number of loose items -->
+              <query>
+                UPDATE Items SET numloose = numloose + $new.purchnumrec
+                WHERE supid = $new.supid AND brandname = $new.brandname AND itemcode = $new.itemcode
+              </query>
+              <!-- insert purchased items received data -->
+              <query>
+                INSERT INTO ReceivePurchasedItems
+                  (purchrecdate, purchnum, supid,
+                   brandname, itemcode, purchnumrec)
+                VALUES
+                  ($new.purchrecdate, $new.purchnum, $new.supid,
+                   $new.brandname, $new.itemcode, $new.purchnumrec)
+              </query>
+ 
+ 
+            </emptycase>
+            <!-- primary key has not changed -->
+            <nonemptycase>
+            </nonemptycase>
+          </emptytest>
+          <query>
+          </query>
+
+        </updater>

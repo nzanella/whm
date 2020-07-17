@@ -1,0 +1,173 @@
+<!--
+   Data GUI version 1.0 DTD
+
+   Namespace = http://whm.sf.net/2004/datagui
+
+   For further information, see: http://whm.sf.net/
+
+   Copyright (c) 2004 Neil Zanella <nzanella at shell dot sf dot net>,
+   All Rights Reserved. 
+
+   This DTD module is identified by the PUBLIC and SYSTEM identifiers:
+
+   PUBLIC "-//Neil Zanella//DTD Data GUI 1.0//EN"
+   SYSTEM "http://whm.sf.net/dtds/datagui/datagui-1.0.dtd"
+
+   $Revision: 1.0 $
+   $Date: 2004/08/28 02:24:00 $
+
+Data GUI files allow the programmer to define patterns of behavior which
+allow users of data driven graphical user interfaces to interact with
+databases in convenient ways. Such behavioral patterns are then
+parsed and bound to the application at runtime.
+
+Data GUI files are mainly comprised of behavioral control nodes. These
+are abstract entities which are responsible for displaying database
+data onto the user interface and ensure the correctness of actions
+requested by the user on database data prior to carrying them out.
+In order to carry out their task control nodes know about collections
+of fields coming from custom queries executed on the database and also
+know about user input coming from the user interface in the form of
+widgets properties. Control nodes are then able to transform data
+and perform all necessary checks as data is passed back and forth
+between the user interface and the database.
+
+Each screen may contain widgets pertaining to more than one control
+node and conversely a control node may span several screens as control
+nodes are completely decoupled from the user interface. Some control
+nodes may not display all of their data as some of it may be used to
+enforce master detail relationships. These are used to filter data
+presented to the user by some control nodes based on data selections
+taking place within others. Control nodes assume the existence of
+custom defined actions to add, modify, and remove data which the
+programmer defines by means of SQL queries to ensure integrity
+constraints are satisfied prior to executing them. Furthermore
+control nodes may be linked in another way by means of send
+receive relationships which allow user input to be filled
+out on the basis of user selections on widgets pertaining
+to other control nodes. Control nodes may also be cloned.
+-->
+
+<!--================ Data GUI ============================================-->
+
+<!ELEMENT datagui ((control | masterdetail | sendreceive | selectorsendreceive)*)>
+
+<!ATTLIST datagui version CDATA #FIXED "1.0">
+
+<!--================ Control =============================================-->
+
+<!ELEMENT control (extractor, selector, manipulator?)>
+
+<!ATTLIST control cname ID #REQUIRED>
+
+<!ELEMENT clonecontrol (cloneextractor?, selector, clonemanipulator?)>
+
+<!ATTLIST control cname ID #REQUIRED srccname ID #REQUIRED>
+
+<!--================ Extractor ===========================================-->
+
+<!ELEMENT extractor (query, field+)>
+
+<!ELEMENT query (#PCDATA)>
+
+<!ELEMENT field EMPTY>
+
+<!ATTLIST field fname CDATA #REQUIRED required (yes|no) "no" type CDATA #REQUIRED>
+
+<!ELEMENT cloneextractor (query)>
+
+<!--================ Selector ============================================-->
+
+<!ELEMENT selector (header+)>
+
+<!ATTLIST selector name ID #REQUIRED>
+
+<!ELEMENT header EMPTY>
+
+<!ATTLIST header fname CDATA #REQUIRED>
+
+<!--================ Manipulator =========================================-->
+
+<!ELEMENT manipulator (exposer+, executor?)>
+
+<!ELEMENT exposer EMPTY>
+
+<!ATTLIST exposer name ID #REQUIRED fname CDATA #REQUIRED>
+
+<!ELEMENT clonemanipulator (exposer+, cloneexecutor?)>
+
+<!--================ Executor ============================================-->
+
+<!ELEMENT executor (add, modify, remove, submit, cancel, inserter, updater, deleter)>
+
+<!ELEMENT cloneexecutor (add, modify, remove, submit, cancel)>
+
+<!ELEMENT add EMPTY>
+
+<!ATTLIST add name ID #REQUIRED>
+
+<!ELEMENT modify EMPTY>
+
+<!ATTLIST modify name ID #REQUIRED>
+
+<!ELEMENT remove EMPTY>
+
+<!ATTLIST remove name ID #REQUIRED>
+
+<!ELEMENT submit EMPTY>
+
+<!ATTLIST submit name ID #REQUIRED>
+
+<!ELEMENT cancel EMPTY>
+
+<!ATTLIST cancel name ID #REQUIRED>
+
+<!ELEMENT inserter (emptytest*, emptycheck*, query*)>
+
+<!ELEMENT updater (emptytest*, emptycheck*, query*)>
+
+<!ELEMENT deleter (emptytest*, emptycheck*, query*)>
+
+<!ELEMENT emptytest (query, emptycase, nonemptycase)>
+
+<!ELEMENT emptycase (emptytest*, emptycheck*, query*)>
+
+<!ELEMENT nonemptycase (emptytest*, emptycheck*, query*)>
+
+<!ELEMENT emptycheck (query, errormessage)>
+
+<!ELEMENT nonemptycheck (query, errormessage)>
+
+<!ELEMENT errormessage (#PCDATA)>
+
+<!--================ Master Detail Relationships =========================-->
+
+<!ELEMENT masterdetail (mdfield+)>
+
+<!ATTLIST masterdetail mcname IDREF #REQUIRED dcname IDREF #REQUIRED>
+
+<!ELEMENT mdfield EMPTY>
+
+<!ATTLIST mdfield fname CDATA #REQUIRED>
+
+<!--================ Send Receive Relationships ==========================-->
+
+<!ELEMENT sendreceive (maplet+, messenger)>
+
+<!ATTLIST sendreceive scname IDREF #REQUIRED rcname IDREF #REQUIRED>
+
+<!ELEMENT maplet EMPTY>
+
+<!ATTLIST maplet sfname CDATA #REQUIRED rfname CDATA #REQUIRED>
+
+<!ELEMENT messenger EMPTY>
+
+<!ATTLIST messenger name CDATA #REQUIRED>
+
+<!--================= Selector Send Receive Relationships ================-->
+
+<!ELEMENT selectorsendreceive (maplet+)>
+
+<!ATTLIST selectorsendreceive ssname IDREF #REQUIRED rsname IDREF #REQUIRED>
+
+<!--======================================================================-->
